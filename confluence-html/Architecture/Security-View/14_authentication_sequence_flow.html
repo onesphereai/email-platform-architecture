@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>14_authentication_sequence_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>User Authentication &amp; Authorization - Flow Description</h1>
+<br/>
+<p><strong>Diagram</strong>: <code>14<em>authentication</em>sequence.png</code></p>
+<br/>
+<h2>Overview</h2>
+<p>This sequence diagram illustrates the complete SAML-based authentication flow, from initial platform access through enterprise identity provider integration, JWT token generation, and authorized API access.</p>
+<br/>
+<h2>Sequence Flow</h2>
+<br/>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Source</th>
+<th>Target</th>
+<th>Method/Action</th>
+<th>Description</th>
+<th>Response/Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>End User</td>
+<td>Web Browser</td>
+<td>accessPlatform()</td>
+<td>User navigates to Email Platform URL</td>
+<td>Browser request initiated</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Web Browser</td>
+<td>CloudFront CDN</td>
+<td>GET /</td>
+<td>Browser requests platform homepage</td>
+<td>Request sent to CDN</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CloudFront CDN</td>
+<td>Angular App</td>
+<td>serveAngularApp()</td>
+<td>CDN serves Angular application files</td>
+<td>App files delivered</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Angular App</td>
+<td>Web Browser</td>
+<td>loadApp()</td>
+<td>Angular application loads in browser</td>
+<td>App loaded</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Web Browser</td>
+<td>End User</td>
+<td>displayLoginPage()</td>
+<td>Browser displays login interface</td>
+<td>Login page shown</td>
+</tr>
+<tr>
+<td>6</td>
+<td>End User</td>
+<td>Angular App</td>
+<td>clickLogin()</td>
+<td>User clicks login button</td>
+<td>Login initiated</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Angular App</td>
+<td>Cognito User Pool</td>
+<td>redirectToSAML()</td>
+<td>App redirects to SAML authentication</td>
+<td>SAML flow started</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Cognito User Pool</td>
+<td>Enterprise IdP</td>
+<td>SAMLRequest</td>
+<td>Cognito sends SAML authentication request</td>
+<td>Request sent to IdP</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Enterprise IdP</td>
+<td>End User</td>
+<td>authenticateUser()</td>
+<td>IdP presents authentication form</td>
+<td>Auth form displayed</td>
+</tr>
+<tr>
+<td>10</td>
+<td>End User</td>
+<td>Enterprise IdP</td>
+<td>provideCredentials()</td>
+<td>User enters credentials (username/password/MFA)</td>
+<td>Credentials submitted</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Enterprise IdP</td>
+<td>Cognito User Pool</td>
+<td>SAMLResponse</td>
+<td>IdP sends SAML response with assertions</td>
+<td>Response sent</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Cognito User Pool</td>
+<td>Cognito User Pool</td>
+<td>validateSAMLResponse()</td>
+<td>Cognito validates SAML response and assertions</td>
+<td>Validation completed</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Cognito User Pool</td>
+<td>Angular App</td>
+<td>generateJWTToken()</td>
+<td>Cognito generates JWT token for user</td>
+<td>Token generated</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Angular App</td>
+<td>Web Browser</td>
+<td>storeToken()</td>
+<td>App stores JWT token in browser storage</td>
+<td>Token stored</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Angular App</td>
+<td>Web Browser</td>
+<td>redirectToDashboard()</td>
+<td>App redirects to main dashboard</td>
+<td>Redirect initiated</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Web Browser</td>
+<td>API Gateway</td>
+<td>GET /dashboard</td>
+<td>Browser requests dashboard data</td>
+<td>Request sent</td>
+</tr>
+<tr>
+<td>17</td>
+<td>API Gateway</td>
+<td>Auth Service</td>
+<td>validateJWTToken()</td>
+<td>Gateway validates JWT token</td>
+<td>Token validation started</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Auth Service</td>
+<td>Cognito User Pool</td>
+<td>verifyToken()</td>
+<td>Service verifies token with Cognito</td>
+<td>Token verified</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Cognito User Pool</td>
+<td>Auth Service</td>
+<td>return userClaims</td>
+<td>Cognito returns user claims and attributes</td>
+<td>Claims returned</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Auth Service</td>
+<td>Auth Service</td>
+<td>extractTenantId()</td>
+<td>Service extracts tenant ID from claims</td>
+<td>Tenant ID extracted</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Auth Service</td>
+<td>API Gateway</td>
+<td>return authContext</td>
+<td>Service returns authentication context</td>
+<td>Context returned</td>
+</tr>
+<tr>
+<td>22</td>
+<td>API Gateway</td>
+<td>UI Service</td>
+<td>getUserData()</td>
+<td>Gateway routes request to UI service</td>
+<td>Request routed</td>
+</tr>
+<tr>
+<td>23</td>
+<td>UI Service</td>
+<td>DynamoDB</td>
+<td>queryUserProfile()</td>
+<td>Service queries user profile data</td>
+<td>Query executed</td>
+</tr>
+<tr>
+<td>24</td>
+<td>DynamoDB</td>
+<td>UI Service</td>
+<td>return userProfile</td>
+<td>Database returns user profile</td>
+<td>Profile returned</td>
+</tr>
+<tr>
+<td>25</td>
+<td>UI Service</td>
+<td>API Gateway</td>
+<td>return dashboardData</td>
+<td>Service returns dashboard data</td>
+<td>Data returned</td>
+</tr>
+<tr>
+<td>26</td>
+<td>API Gateway</td>
+<td>Angular App</td>
+<td>return 200 OK</td>
+<td>Gateway returns successful response</td>
+<td>Response received</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Angular App</td>
+<td>Web Browser</td>
+<td>renderDashboard()</td>
+<td>App renders dashboard with user data</td>
+<td>Dashboard rendered</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Web Browser</td>
+<td>End User</td>
+<td>displayDashboard()</td>
+<td>Browser displays personalized dashboard</td>
+<td>Dashboard shown</td>
+</tr>
+<tr>
+<td>29</td>
+<td>Angular App</td>
+<td>Cognito User Pool</td>
+<td>refreshToken()</td>
+<td>App refreshes JWT token before expiry</td>
+<td>Refresh initiated</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Cognito User Pool</td>
+<td>Angular App</td>
+<td>return newToken</td>
+<td>Cognito returns new JWT token</td>
+<td>New token received</td>
+</tr>
+<tr>
+<td>31</td>
+<td>Angular App</td>
+<td>Web Browser</td>
+<td>updateStoredToken()</td>
+<td>App updates stored token</td>
+<td>Token updated</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Authentication Phases</h2>
+<br/>
+<h3>Phase 1: Initial Platform Access (Steps 1-5)</h3>
+<ul>
+<li><strong>Purpose</strong>: Load Email Platform application</li>
+<li><strong>Components</strong>: Web Browser, CloudFront CDN, Angular App</li>
+<li><strong>Process</strong>: </li>
+<ul>
+<li>User navigates to platform URL</li>
+<li>CDN serves static Angular application files</li>
+<li>App loads and displays login interface</li>
+</ul>
+<li><strong>Outcome</strong>: User sees login page</li>
+</ul>
+<br/>
+<h3>Phase 2: SAML Authentication Flow (Steps 6-13)</h3>
+<ul>
+<li><strong>Purpose</strong>: Authenticate user through enterprise identity provider</li>
+<li><strong>Components</strong>: Angular App, Cognito User Pool, Enterprise IdP</li>
+<li><strong>Process</strong>:</li>
+<ul>
+<li>User initiates login</li>
+<li>SAML authentication request sent to enterprise IdP</li>
+<li>User provides credentials to IdP</li>
+<li>IdP validates credentials and returns SAML response</li>
+<li>Cognito validates SAML response and generates JWT token</li>
+</ul>
+<li><strong>Outcome</strong>: Authenticated user with JWT token</li>
+</ul>
+<br/>
+<h3>Phase 3: Token Storage and Redirect (Steps 14-15)</h3>
+<ul>
+<li><strong>Purpose</strong>: Store authentication token and redirect to dashboard</li>
+<li><strong>Components</strong>: Angular App, Web Browser</li>
+<li><strong>Process</strong>:</li>
+<ul>
+<li>JWT token stored in browser (localStorage/sessionStorage)</li>
+<li>User redirected to main dashboard</li>
+</ul>
+<li><strong>Outcome</strong>: User ready to access protected resources</li>
+</ul>
+<br/>
+<h3>Phase 4: Authorized API Access (Steps 16-28)</h3>
+<ul>
+<li><strong>Purpose</strong>: Access protected resources with authentication</li>
+<li><strong>Components</strong>: API Gateway, Auth Service, Cognito, UI Service, DynamoDB</li>
+<li><strong>Process</strong>:</li>
+<ul>
+<li>Browser requests dashboard data</li>
+<li>API Gateway validates JWT token</li>
+<li>Auth service verifies token and extracts user context</li>
+<li>UI service fetches user-specific data</li>
+<li>Dashboard rendered with personalized content</li>
+</ul>
+<li><strong>Outcome</strong>: User sees personalized dashboard</li>
+</ul>
+<br/>
+<h3>Phase 5: Token Refresh (Steps 29-31)</h3>
+<ul>
+<li><strong>Purpose</strong>: Maintain authentication without re-login</li>
+<li><strong>Components</strong>: Angular App, Cognito User Pool</li>
+<li><strong>Process</strong>:</li>
+<ul>
+<li>App monitors token expiry</li>
+<li>Refreshes token before expiration</li>
+<li>Updates stored token</li>
+</ul>
+<li><strong>Outcome</strong>: Seamless authentication maintenance</li>
+</ul>
+<br/>
+<h2>SAML Integration Details</h2>
+<br/>
+<h3>SAML Request Example</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">xml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+<samlp:AuthnRequest 
+    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
+    ID="_8e8dc5f69a98cc4c1ff3427e5ce34606fd672f91e6"
+    Version="2.0"
+    IssueInstant="2024-01-15T10:30:00Z"
+    Destination="https://idp.company.com/saml/sso"
+    AssertionConsumerServiceURL="https://emailplatform.messagecentre.com/saml/acs">
+    <saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">
+        urn:amazon:cognito:sp:us-east-1_XXXXXXXXX
+    </saml:Issuer>
+</samlp:AuthnRequest>
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>SAML Response Example</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">xml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+<samlp:Response 
+    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
+    ID="_8e8dc5f69a98cc4c1ff3427e5ce34606fd672f91e6"
+    Version="2.0"
+    IssueInstant="2024-01-15T10:30:30Z">
+    <saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">
+        <saml:Subject>
+            <saml:NameID Format="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">
+                john.doe@company.com
+            </saml:NameID>
+        </saml:Subject>
+        <saml:AttributeStatement>
+            <saml:Attribute Name="email">
+                <saml:AttributeValue>john.doe@company.com</saml:AttributeValue>
+            </saml:Attribute>
+            <saml:Attribute Name="tenantId">
+                <saml:AttributeValue>tenant_123456789</saml:AttributeValue>
+            </saml:Attribute>
+            <saml:Attribute Name="role">
+                <saml:AttributeValue>marketing_manager</saml:AttributeValue>
+            </saml:Attribute>
+        </saml:AttributeStatement>
+    </saml:Assertion>
+</samlp:Response>
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>JWT Token Structure</h2>
+<br/>
+<h3>JWT Header</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "alg": "RS256",
+  "typ": "JWT",
+  "kid": "cognito-key-id"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>JWT Payload</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "sub": "user_123456789",
+  "email": "john.doe@company.com",
+  "email_verified": true,
+  "iss": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXXXXXX",
+  "aud": "client_id_123456789",
+  "token_use": "id",
+  "auth_time": 1642248600,
+  "iat": 1642248600,
+  "exp": 1642252200,
+  "custom:tenantId": "tenant_123456789",
+  "custom:role": "marketing_manager",
+  "custom:permissions": ["campaigns.read", "campaigns.write", "templates.read"]
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Authentication Context</h2>
+<br/>
+<h3>User Claims Extraction</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Extract user context from JWT token
+const authContext = {
+  userId: token.sub,
+  email: token.email,
+  tenantId: token['custom:tenantId'],
+  role: token['custom:role'],
+  permissions: token['custom:permissions'],
+  sessionId: generateSessionId(),
+  loginTime: new Date(token.auth_time * 1000),
+  expiryTime: new Date(token.exp * 1000)
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Tenant Isolation</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Ensure tenant isolation in all operations
+const tenantContext = {
+  tenantId: authContext.tenantId,
+  partitionKey: `TENANT#${authContext.tenantId}`,
+  resourcePrefix: `tenant-${authContext.tenantId}`,
+  permissions: authContext.permissions
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Security Measures</h2>
+<br/>
+<h3>Token Security</h3>
+<ul>
+<li><strong>Encryption</strong>: JWT tokens signed with RS256 algorithm</li>
+<li><strong>Expiration</strong>: Short-lived tokens (1 hour) with refresh capability</li>
+<li><strong>Storage</strong>: Secure storage in browser (httpOnly cookies preferred)</li>
+<li><strong>Transmission</strong>: HTTPS only for all token exchanges</li>
+</ul>
+<br/>
+<h3>SAML Security</h3>
+<ul>
+<li><strong>Assertion Encryption</strong>: SAML assertions encrypted in transit</li>
+<li><strong>Signature Validation</strong>: Digital signatures verified</li>
+<li><strong>Replay Protection</strong>: Timestamp and ID validation</li>
+<li><strong>Audience Restriction</strong>: Tokens valid only for intended audience</li>
+</ul>
+<br/>
+<h3>Session Management</h3>
+<ul>
+<li><strong>Session Timeout</strong>: Configurable session timeout</li>
+<li><strong>Concurrent Sessions</strong>: Limit concurrent sessions per user</li>
+<li><strong>Session Invalidation</strong>: Immediate invalidation on logout</li>
+<li><strong>Activity Tracking</strong>: Monitor user activity for security</li>
+</ul>
+<br/>
+<h2>Error Handling</h2>
+<br/>
+<h3>Authentication Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Error Type</th>
+<th>HTTP Status</th>
+<th>Description</th>
+<th>User Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Invalid Credentials</td>
+<td>401</td>
+<td>Username/password incorrect</td>
+<td>Re-enter credentials</td>
+</tr>
+<tr>
+<td>Account Locked</td>
+<td>423</td>
+<td>Too many failed attempts</td>
+<td>Contact administrator</td>
+</tr>
+<tr>
+<td>SAML Error</td>
+<td>400</td>
+<td>SAML response invalid</td>
+<td>Contact IT support</td>
+</tr>
+<tr>
+<td>Token Expired</td>
+<td>401</td>
+<td>JWT token expired</td>
+<td>Automatic refresh or re-login</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Authorization Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Error Type</th>
+<th>HTTP Status</th>
+<th>Description</th>
+<th>User Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Insufficient Permissions</td>
+<td>403</td>
+<td>User lacks required permissions</td>
+<td>Contact administrator</td>
+</tr>
+<tr>
+<td>Tenant Mismatch</td>
+<td>403</td>
+<td>User not authorized for tenant</td>
+<td>Verify account access</td>
+</tr>
+<tr>
+<td>Resource Not Found</td>
+<td>404</td>
+<td>Requested resource not accessible</td>
+<td>Check resource permissions</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>System Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Error Type</th>
+<th>HTTP Status</th>
+<th>Description</th>
+<th>System Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IdP Unavailable</td>
+<td>503</td>
+<td>Identity provider not responding</td>
+<td>Retry with backoff</td>
+</tr>
+<tr>
+<td>Cognito Error</td>
+<td>500</td>
+<td>AWS Cognito service error</td>
+<td>Log error, alert operations</td>
+</tr>
+<tr>
+<td>Database Error</td>
+<td>500</td>
+<td>User profile query failed</td>
+<td>Retry operation</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Token Refresh Flow</h2>
+<br/>
+<h3>Automatic Refresh</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Monitor token expiry and refresh automatically
+setInterval(() => {
+  const token = getStoredToken();
+  const expiryTime = new Date(token.exp * 1000);
+  const currentTime = new Date();
+  const timeUntilExpiry = expiryTime - currentTime;
+  
+  // Refresh token 5 minutes before expiry
+  if (timeUntilExpiry < 5 * 60 * 1000) {
+    refreshToken();
+  }
+}, 60000); // Check every minute
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Refresh Request</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Refresh JWT token
+async function refreshToken() {
+  try {
+    const response = await fetch('/auth/refresh', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getCurrentToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const { token } = await response.json();
+      storeToken(token);
+    } else {
+      // Refresh failed, redirect to login
+      redirectToLogin();
+    }
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+    redirectToLogin();
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Multi-Factor Authentication</h2>
+<br/>
+<h3>MFA Flow Integration</h3>
+<ol>
+<li><strong>Primary Authentication</strong>: Username/password at IdP</li>
+<li><strong>MFA Challenge</strong>: IdP presents MFA challenge (SMS, TOTP, etc.)</li>
+<li><strong>MFA Response</strong>: User provides MFA code</li>
+<li><strong>Validation</strong>: IdP validates MFA response</li>
+<li><strong>SAML Response</strong>: IdP sends SAML response with MFA claim</li>
+</ol>
+<br/>
+<h3>MFA Claims in JWT</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "custom:mfa_verified": true,
+  "custom:mfa_method": "totp",
+  "custom:mfa_timestamp": 1642248600
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Single Sign-On (SSO)</h2>
+<br/>
+<h3>SSO Benefits</h3>
+<ul>
+<li><strong>User Experience</strong>: Single login for multiple applications</li>
+<li><strong>Security</strong>: Centralized authentication and authorization</li>
+<li><strong>Administration</strong>: Centralized user management</li>
+<li><strong>Compliance</strong>: Consistent security policies</li>
+</ul>
+<br/>
+<h3>SSO Session Management</h3>
+<ul>
+<li><strong>Global Session</strong>: Maintained at IdP level</li>
+<li><strong>Application Sessions</strong>: Individual sessions per application</li>
+<li><strong>Session Synchronization</strong>: Coordinate session timeouts</li>
+<li><strong>Single Logout</strong>: Logout from all applications simultaneously</li>
+</ul>
+<br/>
+</body>
+</html>

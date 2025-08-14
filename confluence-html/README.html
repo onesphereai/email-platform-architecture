@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>README</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Email Platform Architecture</h1>
+<br/>
+<p>Comprehensive architecture documentation and diagrams for the Email Platform - a self-service email marketing solution for B2B customers.</p>
+<br/>
+<h2>📋 Executive Documentation</h2>
+<br/>
+<ul>
+<li><strong><a href="Email<em>Platform</em>Architecture_Documentation.md">Architecture Documentation</a></strong> - Complete technical architecture</li>
+<li><strong><a href="Email<em>Platform</em>API_Specification.md">API Specification</a></strong> - REST API documentation</li>
+<li><strong><a href="Email<em>Platform</em>Documentation_Summary.md">Documentation Summary</a></strong> - Executive summary</li>
+</ul>
+<br/>
+<h2>🏗️ Architecture Views</h2>
+<br/>
+<p>The architecture is organized into five comprehensive views, each focusing on specific aspects of the system:</p>
+<br/>
+<h3>🔧 [Development View](Architecture/Development-View/)</h3>
+<p><strong>Software components, APIs, and development processes</strong></p>
+<ul>
+<li>API specifications and integration patterns</li>
+<li>Component architecture and dependencies</li>
+<li>Business process workflows and sequences</li>
+<li>CI/CD pipeline and development practices</li>
+</ul>
+<br/>
+<h3>🚀 [Deployment View](Architecture/Deployment-View/)</h3>
+<p><strong>Infrastructure, runtime environment, and operations</strong></p>
+<ul>
+<li>Infrastructure architecture and AWS services</li>
+<li>Deployment strategies and environment management</li>
+<li>Monitoring, observability, and alerting</li>
+<li>Error handling and recovery procedures</li>
+</ul>
+<br/>
+<h3>🔒 [Security View](Architecture/Security-View/)</h3>
+<p><strong>Security architecture, authentication, and compliance</strong></p>
+<ul>
+<li>Multi-layered security architecture</li>
+<li>Authentication and authorization mechanisms</li>
+<li>Data protection and encryption strategies</li>
+<li>Compliance frameworks and governance</li>
+</ul>
+<br/>
+<h3>📊 [Data View](Architecture/Data-View/)</h3>
+<p><strong>Data architecture, storage, and analytics</strong></p>
+<ul>
+<li>Multi-tenant data isolation patterns</li>
+<li>Database design and access patterns</li>
+<li>Analytics and reporting architecture</li>
+<li>Data governance and privacy controls</li>
+</ul>
+<br/>
+<h3>💰 [Cost View](Architecture/Cost-View/)</h3>
+<p><strong>Cost analysis, optimization, and financial planning</strong></p>
+<ul>
+<li>Comprehensive cost breakdown and analysis</li>
+<li>Cost optimization strategies and recommendations</li>
+<li>Pricing models and revenue projections</li>
+<li>Financial planning and ROI analysis</li>
+</ul>
+<br/>
+<h2>🎨 Quick Reference - Key Diagrams</h2>
+<br/>
+<h3>High-Level Architecture</h3>
+<ul>
+<li><a href="generated-diagrams/16<em>clean</em>high<em>level</em>architecture.png">Clean High Level Architecture</a> | <a href="Architecture/Deployment-View/16<em>clean</em>high<em>level</em>architecture_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/01<em>high</em>level<em>architecture.png">Original High Level Architecture</a> | <a href="Architecture/Deployment-View/01</em>high<em>level</em>architecture_flow.md">Flow Description</a></li>
+</ul>
+<br/>
+<h3>Security &amp; Compliance</h3>
+<ul>
+<li><a href="generated-diagrams/19<em>clean</em>security<em>architecture.png">Clean Security Architecture</a> | <a href="Architecture/Security-View/19</em>clean<em>security</em>architecture_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/14<em>authentication</em>sequence.png">Authentication Sequence</a> | <a href="Architecture/Security-View/14<em>authentication</em>sequence_flow.md">Flow Description</a></li>
+</ul>
+<br/>
+<h3>Data &amp; Multi-Tenancy</h3>
+<ul>
+<li><a href="generated-diagrams/18<em>clean</em>multitenant<em>architecture.png">Clean Multi-Tenant Architecture</a> | <a href="Architecture/Data-View/18</em>clean<em>multitenant</em>architecture_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/13<em>email</em>delivery<em>analytics</em>sequence.png">Email Delivery &amp; Analytics</a> | <a href="Architecture/Data-View/13<em>email</em>delivery<em>analytics</em>sequence_flow.md">Flow Description</a></li>
+</ul>
+<br/>
+<h3>Development &amp; APIs</h3>
+<ul>
+<li><a href="generated-diagrams/12<em>api</em>integration<em>sequence.png">API Integration Sequence</a> | <a href="Architecture/Development-View/12</em>api<em>integration</em>sequence_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/10<em>campaign</em>creation<em>sequence.png">Campaign Creation Sequence</a> | <a href="Architecture/Development-View/10</em>campaign<em>creation</em>sequence_flow.md">Flow Description</a></li>
+</ul>
+<br/>
+<h2>🏗️ Architecture Highlights</h2>
+<br/>
+<ul>
+<li><strong>Multi-tenant silo model</strong> with complete data isolation</li>
+<li><strong>Serverless architecture</strong> using AWS Lambda, API Gateway, DynamoDB</li>
+<li><strong>Single table design</strong> optimized for DynamoDB access patterns</li>
+<li><strong>Comprehensive security</strong> with multiple authentication methods</li>
+<li><strong>Email authentication</strong> with SPF, DKIM, DMARC</li>
+<li><strong>Real-time analytics</strong> with OpenSearch Serverless</li>
+<li><strong>Scalable processing</strong> with SQS/SNS message queuing</li>
+</ul>
+<br/>
+<h2>🔧 Technology Stack</h2>
+<br/>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technology</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frontend</td>
+<td>Angular, TypeScript</td>
+<td>User interface</td>
+</tr>
+<tr>
+<td>API Gateway</td>
+<td>AWS API Gateway</td>
+<td>Request routing</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>AWS Cognito</td>
+<td>SAML SSO</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Node.js, Lambda</td>
+<td>Business logic</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>DynamoDB</td>
+<td>Data storage</td>
+</tr>
+<tr>
+<td>File Storage</td>
+<td>S3</td>
+<td>Templates and assets</td>
+</tr>
+<tr>
+<td>Email Service</td>
+<td>Amazon SES</td>
+<td>Email delivery</td>
+</tr>
+<tr>
+<td>Message Queue</td>
+<td>SQS, SNS</td>
+<td>Async processing</td>
+</tr>
+<tr>
+<td>Analytics</td>
+<td>OpenSearch</td>
+<td>Search and analytics</td>
+</tr>
+<tr>
+<td>Monitoring</td>
+<td>CloudWatch, X-Ray</td>
+<td>Observability</td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td>Jenkins, Serverless</td>
+<td>Deployment</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>📊 Implementation Phases</h2>
+<br/>
+<h3>Phase 1: MVP (Q1 2024)</h3>
+<ul>
+<li>Basic campaign creation and sending</li>
+<li>Simple drag-and-drop builder</li>
+<li>SAML authentication</li>
+<li>Basic reporting</li>
+</ul>
+<br/>
+<h3>Phase 2: Enhanced Features (Q2 2024)</h3>
+<ul>
+<li>Advanced template management</li>
+<li>A/B testing capabilities</li>
+<li>Enhanced analytics</li>
+<li>API access</li>
+</ul>
+<br/>
+<h3>Phase 3: Enterprise Features (Q3 2024)</h3>
+<ul>
+<li>Marketing automation</li>
+<li>Advanced segmentation</li>
+<li>CRM integrations</li>
+<li>Multi-brand support</li>
+</ul>
+<br/>
+<h3>Phase 4: AI and Advanced Analytics (Q4 2024)</h3>
+<ul>
+<li>AI-powered optimization</li>
+<li>Advanced personalization</li>
+<li>Cross-channel orchestration</li>
+<li>Enterprise governance</li>
+</ul>
+<br/>
+<h2>🔒 Compliance &amp; Security</h2>
+<br/>
+<ul>
+<li><strong>GDPR, CCPA compliance</strong> with data sovereignty</li>
+<li><strong>Email standards compliance</strong> (CAN-SPAM, Australian Spam Act)</li>
+<li><strong>Enterprise security</strong> with encryption at rest and in transit</li>
+<li><strong>Comprehensive monitoring</strong> with audit trails</li>
+<li><strong>Rate limiting and throttling</strong> for abuse prevention</li>
+</ul>
+<br/>
+<h2>📞 Support</h2>
+<br/>
+<p>For questions about this architecture:</p>
+<ul>
+<li><strong>Technical Documentation</strong>: See individual markdown files</li>
+<li><strong>Architecture Questions</strong>: Contact the development team</li>
+<li><strong>Implementation Support</strong>: Refer to the API specification</li>
+</ul>
+<br/>
+<h2>📄 License</h2>
+<br/>
+<p>This documentation is proprietary to OneSphere AI and Message Centre.</p>
+<br/>
+<hr/>
+<br/>
+<p><strong>Generated</strong>: Thu Aug 14 12:46:15 AEST 2025</p>
+<p><strong>Version</strong>: 1.0.0</p>
+<p><strong>Last Updated</strong>: Thu Aug 14 12:46:15 AEST 2025</p>
+<br/>
+</body>
+</html>

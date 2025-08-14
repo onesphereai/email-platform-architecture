@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>10_campaign_creation_sequence_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Campaign Creation Sequence - Flow Description</h1>
+<br/>
+<p><strong>Diagram</strong>: <code>10<em>campaign</em>creation_sequence.png</code></p>
+<br/>
+<h2>Overview</h2>
+<p>This sequence diagram shows the complete flow for a marketing user creating an email campaign, from authentication through template upload and recipient management.</p>
+<br/>
+<h2>Sequence Flow</h2>
+<br/>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Source</th>
+<th>Target</th>
+<th>Method/Action</th>
+<th>Description</th>
+<th>Response/Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Marketing User</td>
+<td>Angular UI</td>
+<td>login()</td>
+<td>User initiates login process</td>
+<td>Login form displayed</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Angular UI</td>
+<td>API Gateway</td>
+<td>authenticate()</td>
+<td>UI sends authentication request</td>
+<td>Request forwarded</td>
+</tr>
+<tr>
+<td>3</td>
+<td>API Gateway</td>
+<td>Cognito Auth</td>
+<td>validateCredentials()</td>
+<td>API Gateway validates user credentials</td>
+<td>Credentials verified</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Cognito Auth</td>
+<td>API Gateway</td>
+<td>return JWT token</td>
+<td>Authentication service returns JWT token</td>
+<td>Token received</td>
+</tr>
+<tr>
+<td>5</td>
+<td>API Gateway</td>
+<td>Angular UI</td>
+<td>return auth success</td>
+<td>API Gateway confirms successful authentication</td>
+<td>Auth success returned</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Angular UI</td>
+<td>Marketing User</td>
+<td>show dashboard</td>
+<td>UI displays the main dashboard</td>
+<td>Dashboard visible</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Marketing User</td>
+<td>Angular UI</td>
+<td>createCampaign()</td>
+<td>User initiates campaign creation</td>
+<td>Campaign form opened</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Angular UI</td>
+<td>API Gateway</td>
+<td>POST /campaigns</td>
+<td>UI sends campaign data to API</td>
+<td>Request sent</td>
+</tr>
+<tr>
+<td>9</td>
+<td>API Gateway</td>
+<td>Campaign Service</td>
+<td>validateRequest()</td>
+<td>API Gateway validates and routes request</td>
+<td>Request validated</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Campaign Service</td>
+<td>DynamoDB</td>
+<td>saveCampaign()</td>
+<td>Campaign service stores campaign data</td>
+<td>Data stored</td>
+</tr>
+<tr>
+<td>11</td>
+<td>DynamoDB</td>
+<td>Campaign Service</td>
+<td>return campaignId</td>
+<td>Database returns unique campaign identifier</td>
+<td>Campaign ID received</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Campaign Service</td>
+<td>API Gateway</td>
+<td>return campaign</td>
+<td>Service returns campaign object</td>
+<td>Campaign data returned</td>
+</tr>
+<tr>
+<td>13</td>
+<td>API Gateway</td>
+<td>Angular UI</td>
+<td>return 201 Created</td>
+<td>API confirms campaign creation</td>
+<td>Success status returned</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Angular UI</td>
+<td>Marketing User</td>
+<td>show success</td>
+<td>UI displays success message</td>
+<td>Success confirmation</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Marketing User</td>
+<td>Angular UI</td>
+<td>uploadTemplate()</td>
+<td>User uploads email template</td>
+<td>Template upload initiated</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Angular UI</td>
+<td>API Gateway</td>
+<td>POST /templates</td>
+<td>UI sends template data to API</td>
+<td>Template data sent</td>
+</tr>
+<tr>
+<td>17</td>
+<td>API Gateway</td>
+<td>Template Service</td>
+<td>processTemplate()</td>
+<td>API routes to template processing service</td>
+<td>Template processing started</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Template Service</td>
+<td>S3 Storage</td>
+<td>storeTemplate()</td>
+<td>Service stores template files in S3</td>
+<td>Template files stored</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Template Service</td>
+<td>DynamoDB</td>
+<td>saveMetadata()</td>
+<td>Service saves template metadata</td>
+<td>Metadata stored</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Template Service</td>
+<td>API Gateway</td>
+<td>return template</td>
+<td>Service returns template information</td>
+<td>Template data returned</td>
+</tr>
+<tr>
+<td>21</td>
+<td>API Gateway</td>
+<td>Angular UI</td>
+<td>return success</td>
+<td>API confirms template upload success</td>
+<td>Success confirmed</td>
+</tr>
+<tr>
+<td>22</td>
+<td>Marketing User</td>
+<td>Angular UI</td>
+<td>uploadRecipients()</td>
+<td>User uploads recipient list</td>
+<td>Recipient upload initiated</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Angular UI</td>
+<td>API Gateway</td>
+<td>POST /recipients</td>
+<td>UI sends recipient data to API</td>
+<td>Recipient data sent</td>
+</tr>
+<tr>
+<td>24</td>
+<td>API Gateway</td>
+<td>Recipient Service</td>
+<td>validateEmails()</td>
+<td>API routes to recipient validation service</td>
+<td>Email validation started</td>
+</tr>
+<tr>
+<td>25</td>
+<td>Recipient Service</td>
+<td>DynamoDB</td>
+<td>storeRecipients()</td>
+<td>Service stores validated recipients</td>
+<td>Recipients stored</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Recipient Service</td>
+<td>API Gateway</td>
+<td>return validation</td>
+<td>Service returns validation results</td>
+<td>Validation results returned</td>
+</tr>
+<tr>
+<td>27</td>
+<td>API Gateway</td>
+<td>Angular UI</td>
+<td>return success</td>
+<td>API confirms recipient upload success</td>
+<td>Success confirmed</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Angular UI</td>
+<td>Marketing User</td>
+<td>show ready to send</td>
+<td>UI indicates campaign is ready to send</td>
+<td>Ready status displayed</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Process Phases</h2>
+<br/>
+<h3>Phase 1: Authentication (Steps 1-6)</h3>
+<ul>
+<li><strong>Purpose</strong>: Secure user authentication using SAML/JWT</li>
+<li><strong>Components</strong>: Angular UI, API Gateway, Cognito Auth</li>
+<li><strong>Outcome</strong>: Authenticated user session with dashboard access</li>
+</ul>
+<br/>
+<h3>Phase 2: Campaign Creation (Steps 7-14)</h3>
+<ul>
+<li><strong>Purpose</strong>: Create new email campaign with basic information</li>
+<li><strong>Components</strong>: Campaign Service, DynamoDB</li>
+<li><strong>Data Stored</strong>: Campaign metadata, settings, tenant information</li>
+<li><strong>Outcome</strong>: Campaign created with unique identifier</li>
+</ul>
+<br/>
+<h3>Phase 3: Template Upload (Steps 15-21)</h3>
+<ul>
+<li><strong>Purpose</strong>: Upload and process email template</li>
+<li><strong>Components</strong>: Template Service, S3 Storage, DynamoDB</li>
+<li><strong>Data Stored</strong>: HTML/text templates, assets, template metadata</li>
+<li><strong>Outcome</strong>: Template ready for campaign use</li>
+</ul>
+<br/>
+<h3>Phase 4: Recipient Management (Steps 22-28)</h3>
+<ul>
+<li><strong>Purpose</strong>: Upload and validate recipient email list</li>
+<li><strong>Components</strong>: Recipient Service, DynamoDB</li>
+<li><strong>Validation</strong>: Email format, domain validation, duplicate checking</li>
+<li><strong>Outcome</strong>: Campaign ready for sending</li>
+</ul>
+<br/>
+<h2>Data Flow</h2>
+<br/>
+<h3>Authentication Data</h3>
+<ul>
+<li><strong>Input</strong>: User credentials (SAML assertion)</li>
+<li><strong>Processing</strong>: Cognito validation, JWT generation</li>
+<li><strong>Output</strong>: Authenticated session token</li>
+</ul>
+<br/>
+<h3>Campaign Data</h3>
+<ul>
+<li><strong>Input</strong>: Campaign name, subject, settings, sender information</li>
+<li><strong>Processing</strong>: Validation, tenant association, metadata creation</li>
+<li><strong>Storage</strong>: DynamoDB with tenant-specific partition key</li>
+<li><strong>Output</strong>: Campaign ID and configuration</li>
+</ul>
+<br/>
+<h3>Template Data</h3>
+<ul>
+<li><strong>Input</strong>: HTML template, text version, assets</li>
+<li><strong>Processing</strong>: Template validation, asset optimization</li>
+<li><strong>Storage</strong>: S3 for files, DynamoDB for metadata</li>
+<li><strong>Output</strong>: Template ID and processing status</li>
+</ul>
+<br/>
+<h3>Recipient Data</h3>
+<ul>
+<li><strong>Input</strong>: Email list (CSV/JSON), custom fields</li>
+<li><strong>Processing</strong>: Email validation, deduplication, formatting</li>
+<li><strong>Storage</strong>: DynamoDB with campaign association</li>
+<li><strong>Output</strong>: Validated recipient count and status</li>
+</ul>
+<br/>
+<h2>Error Handling</h2>
+<br/>
+<h3>Authentication Errors</h3>
+<ul>
+<li>Invalid credentials → Return 401 Unauthorized</li>
+<li>Expired tokens → Redirect to login</li>
+<li>SAML errors → Display error message</li>
+</ul>
+<br/>
+<h3>Campaign Creation Errors</h3>
+<ul>
+<li>Validation failures → Return 400 Bad Request with details</li>
+<li>Duplicate names → Return 409 Conflict</li>
+<li>Database errors → Return 500 Internal Server Error</li>
+</ul>
+<br/>
+<h3>Template Upload Errors</h3>
+<ul>
+<li>Invalid template format → Return 422 Unprocessable Entity</li>
+<li>File size limits → Return 413 Payload Too Large</li>
+<li>Storage errors → Return 500 Internal Server Error</li>
+</ul>
+<br/>
+<h3>Recipient Upload Errors</h3>
+<ul>
+<li>Invalid email formats → Return validation report</li>
+<li>Empty lists → Return 400 Bad Request</li>
+<li>Processing errors → Return 500 Internal Server Error</li>
+</ul>
+<br/>
+<h2>Security Measures</h2>
+<br/>
+<h3>Authentication Security</h3>
+<ul>
+<li>JWT tokens with expiration</li>
+<li>SAML assertion validation</li>
+<li>Session management</li>
+</ul>
+<br/>
+<h3>Data Security</h3>
+<ul>
+<li>Tenant isolation in all operations</li>
+<li>Input validation and sanitization</li>
+<li>Encrypted data storage</li>
+</ul>
+<br/>
+<h3>API Security</h3>
+<ul>
+<li>Request validation at API Gateway</li>
+<li>Rate limiting and throttling</li>
+<li>Audit logging for all operations</li>
+</ul>
+<br/>
+<h2>Performance Considerations</h2>
+<br/>
+<h3>Asynchronous Processing</h3>
+<ul>
+<li>Template processing can be async for large files</li>
+<li>Recipient validation can be batched</li>
+<li>Progress indicators for long operations</li>
+</ul>
+<br/>
+<h3>Caching Strategy</h3>
+<ul>
+<li>Template metadata caching</li>
+<li>User session caching</li>
+<li>Campaign configuration caching</li>
+</ul>
+<br/>
+<h3>Scalability</h3>
+<ul>
+<li>Serverless auto-scaling</li>
+<li>Database partition design</li>
+<li>CDN for static assets</li>
+</ul>
+<br/>
+</body>
+</html>

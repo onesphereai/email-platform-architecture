@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>README</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Data View</h1>
+<br/>
+<h2>Overview</h2>
+<p>The Data View describes the system&#x27;s data architecture, including data models, storage strategies, multi-tenancy patterns, analytics, and data flow patterns.</p>
+<br/>
+<h2>Contents</h2>
+<br/>
+<h3>Data Architecture</h3>
+<ul>
+<li><strong><a href="04<em>multi</em>tenant<em>data</em>architecture.png">Multi-Tenant Data Architecture</a></strong> - Complete multi-tenancy implementation</li>
+<li><strong><a href="18<em>clean</em>multitenant_architecture.png">Clean Multi-Tenant Architecture</a></strong> - Simplified tenant isolation view</li>
+</ul>
+<br/>
+<h3>Analytics &amp; Reporting</h3>
+<ul>
+<li><strong><a href="13<em>email</em>delivery<em>analytics</em>sequence.png">Email Delivery &amp; Analytics Sequence</a></strong> - Analytics processing workflow</li>
+</ul>
+<br/>
+<h3>Flow Descriptions</h3>
+<ul>
+<li><strong><a href="18<em>clean</em>multitenant<em>architecture</em>flow.md">Multi-Tenant Architecture Flow</a></strong> - Tenant isolation patterns and implementation</li>
+<li><strong><a href="13<em>email</em>delivery<em>analytics</em>sequence_flow.md">Email Delivery &amp; Analytics Flow</a></strong> - 31-step analytics processing workflow</li>
+</ul>
+<br/>
+<h2>Data Architecture Patterns</h2>
+<br/>
+<h3>Multi-Tenant Silo Model</h3>
+<ul>
+<li><strong>Complete Data Isolation</strong>: Physical separation of tenant data</li>
+<li><strong>Tenant-Specific Resources</strong>: Dedicated storage per tenant</li>
+<li><strong>Security Boundaries</strong>: Strong isolation guarantees</li>
+<li><strong>Compliance Support</strong>: GDPR and data sovereignty compliance</li>
+</ul>
+<br/>
+<h3>Single Table Design (DynamoDB)</h3>
+<ul>
+<li><strong>Optimized Access Patterns</strong>: Efficient query patterns</li>
+<li><strong>Cost Optimization</strong>: Reduced infrastructure costs</li>
+<li><strong>Scalability</strong>: Automatic scaling capabilities</li>
+<li><strong>Performance</strong>: Low-latency data access</li>
+</ul>
+<br/>
+<h3>Data Storage Strategy</h3>
+<ul>
+<li><strong>Hot Data</strong>: DynamoDB for real-time access</li>
+<li><strong>Warm Data</strong>: OpenSearch for analytics and search</li>
+<li><strong>Cold Data</strong>: S3 for archival and backup</li>
+<li><strong>File Storage</strong>: S3 for templates and assets</li>
+</ul>
+<br/>
+<h2>Data Models</h2>
+<br/>
+<h3>Core Entities</h3>
+<ol>
+<li><strong>Tenants</strong>: Organization-level data isolation</li>
+<li><strong>Users</strong>: User profiles and permissions</li>
+<li><strong>Campaigns</strong>: Email campaign metadata</li>
+<li><strong>Templates</strong>: Email template definitions</li>
+<li><strong>Recipients</strong>: Contact lists and segments</li>
+<li><strong>Analytics</strong>: Email delivery and engagement metrics</li>
+</ol>
+<br/>
+<h3>DynamoDB Schema Design</h3>
+<br/>
+<h4>Partition Key Patterns</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+TENANT#{tenantId}#{entityType}#{entityId}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Access Patterns</h4>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Partition Key</th>
+<th>Sort Key</th>
+<th>GSI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Get tenant config</td>
+<td>`TENANT#{id}`</td>
+<td>`CONFIG`</td>
+<td>-</td>
+</tr>
+<tr>
+<td>List campaigns</td>
+<td>`TENANT#{id}`</td>
+<td>`CAMPAIGN#*`</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Get user profile</td>
+<td>`TENANT#{id}`</td>
+<td>`USER#{userId}`</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Query by status</td>
+<td>-</td>
+<td>-</td>
+<td>GSI1</td>
+</tr>
+<tr>
+<td>Query by date</td>
+<td>-</td>
+<td>-</td>
+<td>GSI2</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Data Relationships</h3>
+<ul>
+<li><strong>Tenant → Users</strong>: One-to-many relationship</li>
+<li><strong>Tenant → Campaigns</strong>: One-to-many relationship</li>
+<li><strong>Campaign → Templates</strong>: Many-to-one relationship</li>
+<li><strong>Campaign → Recipients</strong>: One-to-many relationship</li>
+<li><strong>Campaign → Analytics</strong>: One-to-many relationship</li>
+</ul>
+<br/>
+<h2>Data Flow Patterns</h2>
+<br/>
+<h3>Data Ingestion</h3>
+<ol>
+<li><strong>User Input</strong>: Campaign and template data</li>
+<li><strong>API Validation</strong>: Data validation and sanitization</li>
+<li><strong>Data Transformation</strong>: Format conversion and enrichment</li>
+<li><strong>Storage</strong>: Persistent storage in DynamoDB/S3</li>
+</ol>
+<br/>
+<h3>Analytics Pipeline</h3>
+<ol>
+<li><strong>Event Collection</strong>: Email delivery and engagement events</li>
+<li><strong>Real-time Processing</strong>: Stream processing with Lambda</li>
+<li><strong>Data Aggregation</strong>: Metrics calculation and summarization</li>
+<li><strong>Storage</strong>: Analytics data in OpenSearch</li>
+<li><strong>Visualization</strong>: Dashboard and reporting</li>
+</ol>
+<br/>
+<h3>Data Synchronization</h3>
+<ul>
+<li><strong>Event-Driven Updates</strong>: Real-time data synchronization</li>
+<li><strong>Batch Processing</strong>: Periodic data reconciliation</li>
+<li><strong>Conflict Resolution</strong>: Data consistency mechanisms</li>
+<li><strong>Audit Logging</strong>: Change tracking and compliance</li>
+</ul>
+<br/>
+<h2>Data Security &amp; Privacy</h2>
+<br/>
+<h3>Encryption Strategy</h3>
+<ul>
+<li><strong>Encryption at Rest</strong>: AES-256 encryption for all stored data</li>
+<li><strong>Encryption in Transit</strong>: TLS 1.2+ for all data transfers</li>
+<li><strong>Key Management</strong>: AWS KMS for encryption key management</li>
+<li><strong>Field-Level Encryption</strong>: Sensitive data protection</li>
+</ul>
+<br/>
+<h3>Data Privacy Controls</h3>
+<ul>
+<li><strong>PII Identification</strong>: Automatic PII detection and protection</li>
+<li><strong>Data Masking</strong>: PII masking in non-production environments</li>
+<li><strong>Data Retention</strong>: Automated data lifecycle management</li>
+<li><strong>Right to Deletion</strong>: GDPR compliance mechanisms</li>
+</ul>
+<br/>
+<h3>Access Controls</h3>
+<ul>
+<li><strong>Tenant Isolation</strong>: Complete data separation between tenants</li>
+<li><strong>Role-Based Access</strong>: Granular data access permissions</li>
+<li><strong>Audit Logging</strong>: Comprehensive data access logging</li>
+<li><strong>Data Classification</strong>: Sensitive data identification</li>
+</ul>
+<br/>
+<h2>Analytics &amp; Reporting</h2>
+<br/>
+<h3>Real-time Analytics</h3>
+<ul>
+<li><strong>Event Streaming</strong>: Real-time event processing</li>
+<li><strong>Metrics Calculation</strong>: Live performance metrics</li>
+<li><strong>Dashboard Updates</strong>: Real-time dashboard refreshes</li>
+<li><strong>Alerting</strong>: Threshold-based notifications</li>
+</ul>
+<br/>
+<h3>Batch Analytics</h3>
+<ul>
+<li><strong>Daily Reports</strong>: Comprehensive daily analytics</li>
+<li><strong>Trend Analysis</strong>: Historical performance trends</li>
+<li><strong>Comparative Analysis</strong>: Campaign performance comparison</li>
+<li><strong>Export Capabilities</strong>: Data export for external analysis</li>
+</ul>
+<br/>
+<h3>Key Metrics</h3>
+<ul>
+<li><strong>Delivery Metrics</strong>: Sent, delivered, bounced emails</li>
+<li><strong>Engagement Metrics</strong>: Opens, clicks, unsubscribes</li>
+<li><strong>Performance Metrics</strong>: Delivery rates, response times</li>
+<li><strong>Business Metrics</strong>: ROI, conversion rates</li>
+</ul>
+<br/>
+<h2>Data Governance</h2>
+<br/>
+<h3>Data Quality</h3>
+<ul>
+<li><strong>Validation Rules</strong>: Data quality enforcement</li>
+<li><strong>Cleansing Procedures</strong>: Data cleaning and normalization</li>
+<li><strong>Monitoring</strong>: Data quality monitoring and alerting</li>
+<li><strong>Remediation</strong>: Automated data quality fixes</li>
+</ul>
+<br/>
+<h3>Data Lifecycle Management</h3>
+<ul>
+<li><strong>Retention Policies</strong>: Automated data retention</li>
+<li><strong>Archival Strategies</strong>: Cold data archival to S3</li>
+<li><strong>Deletion Procedures</strong>: Secure data deletion</li>
+<li><strong>Backup &amp; Recovery</strong>: Comprehensive backup strategy</li>
+</ul>
+<br/>
+<h3>Compliance Management</h3>
+<ul>
+<li><strong>Data Mapping</strong>: Complete data inventory</li>
+<li><strong>Privacy Impact Assessment</strong>: Regular privacy assessments</li>
+<li><strong>Consent Management</strong>: User consent tracking</li>
+<li><strong>Regulatory Reporting</strong>: Compliance reporting automation</li>
+</ul>
+<br/>
+<h2>Performance Optimization</h2>
+<br/>
+<h3>Query Optimization</h3>
+<ul>
+<li><strong>Index Strategy</strong>: Optimal index design for query patterns</li>
+<li><strong>Partition Design</strong>: Hot partition avoidance</li>
+<li><strong>Caching</strong>: Multi-level caching strategy</li>
+<li><strong>Connection Pooling</strong>: Efficient database connections</li>
+</ul>
+<br/>
+<h3>Storage Optimization</h3>
+<ul>
+<li><strong>Data Compression</strong>: Storage space optimization</li>
+<li><strong>Lifecycle Policies</strong>: Automated data tiering</li>
+<li><strong>Deduplication</strong>: Duplicate data elimination</li>
+<li><strong>Archival</strong>: Long-term data archival strategies</li>
+</ul>
+<br/>
+<h3>Scalability Patterns</h3>
+<ul>
+<li><strong>Horizontal Partitioning</strong>: Data distribution across partitions</li>
+<li><strong>Read Replicas</strong>: Read scaling strategies</li>
+<li><strong>Auto-scaling</strong>: Automatic capacity adjustment</li>
+<li><strong>Load Balancing</strong>: Query load distribution</li>
+</ul>
+<br/>
+</body>
+</html>

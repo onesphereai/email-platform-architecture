@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>19_clean_security_architecture_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Security Architecture - Flow Description</h1>
+<br/>
+<p><strong>Diagram</strong>: <code>19<em>clean</em>security_architecture.png</code></p>
+<br/>
+<h2>Overview</h2>
+<p>This diagram illustrates the comprehensive security architecture of the Email Platform, showing multiple layers of security controls from edge protection to data encryption and monitoring.</p>
+<br/>
+<h2>Security Layer Flow Analysis</h2>
+<br/>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Component</th>
+<th>Security Function</th>
+<th>Protection Type</th>
+<th>Flow Direction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Edge Security</td>
+<td>WAF</td>
+<td>Web application firewall</td>
+<td>Attack prevention</td>
+<td>User → WAF</td>
+</tr>
+<tr>
+<td>Edge Security</td>
+<td>Shield</td>
+<td>DDoS protection</td>
+<td>Traffic filtering</td>
+<td>WAF → Shield</td>
+</tr>
+<tr>
+<td>Edge Security</td>
+<td>CloudFront</td>
+<td>SSL termination, geo-blocking</td>
+<td>Content delivery security</td>
+<td>Shield → CloudFront</td>
+</tr>
+<tr>
+<td>API Security</td>
+<td>API Gateway</td>
+<td>Request validation, rate limiting</td>
+<td>API protection</td>
+<td>CloudFront → API Gateway</td>
+</tr>
+<tr>
+<td>API Security</td>
+<td>Rate Limiting</td>
+<td>Throttling and abuse prevention</td>
+<td>Traffic control</td>
+<td>Within API Gateway</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>Cognito</td>
+<td>User authentication</td>
+<td>Identity verification</td>
+<td>API Gateway → Cognito</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>SAML IdP</td>
+<td>Enterprise identity provider</td>
+<td>Federated authentication</td>
+<td>Cognito ↔ SAML IdP</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>JWT Validator</td>
+<td>Token validation</td>
+<td>Session security</td>
+<td>Cognito → JWT Validator</td>
+</tr>
+<tr>
+<td>Data Protection</td>
+<td>KMS</td>
+<td>Key management</td>
+<td>Encryption key security</td>
+<td>→ Encrypted Services</td>
+</tr>
+<tr>
+<td>Data Protection</td>
+<td>Encrypted DynamoDB</td>
+<td>Database encryption</td>
+<td>Data at rest security</td>
+<td>KMS → DynamoDB</td>
+</tr>
+<tr>
+<td>Data Protection</td>
+<td>Encrypted S3</td>
+<td>File storage encryption</td>
+<td>File security</td>
+<td>KMS → S3</td>
+</tr>
+<tr>
+<td>Email Security</td>
+<td>SES</td>
+<td>Email delivery</td>
+<td>Email authentication</td>
+<td>JWT Validator → SES</td>
+</tr>
+<tr>
+<td>Email Security</td>
+<td>SPF/DKIM/DMARC</td>
+<td>Email authentication</td>
+<td>Email integrity</td>
+<td>SES → Email Auth</td>
+</tr>
+<tr>
+<td>Monitoring</td>
+<td>CloudTrail</td>
+<td>API audit logging</td>
+<td>Compliance tracking</td>
+<td>All Services → CloudTrail</td>
+</tr>
+<tr>
+<td>Monitoring</td>
+<td>GuardDuty</td>
+<td>Threat detection</td>
+<td>Security monitoring</td>
+<td>Services → GuardDuty</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Security Control Flow</h2>
+<br/>
+<h3>Request Security Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+User Request → WAF (Filter) → Shield (DDoS Protection) → CloudFront (SSL/Geo) → 
+API Gateway (Validation) → Rate Limiting → Authentication → Authorized Access
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Authentication Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+User → API Gateway → Cognito → SAML IdP → Credential Validation → 
+JWT Token Generation → Token Validation → Authorized Session
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Data Protection Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Application Request → JWT Validation → KMS Key Retrieval → 
+Encrypted Data Access → Decryption → Authorized Data Access
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Email Security Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Email Request → Authentication → SES Processing → SPF/DKIM/DMARC Validation → 
+Secure Email Delivery
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Monitoring Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+All Security Events → CloudTrail (Audit) → GuardDuty (Analysis) → 
+Security Alerts → Incident Response
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Security Controls by Layer</h2>
+<br/>
+<h3>Edge Security Layer</h3>
+<br/>
+<h4>AWS WAF Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "webAcl": {
+    "name": "EmailPlatformWAF",
+    "rules": [
+      {
+        "name": "SQLInjectionRule",
+        "priority": 1,
+        "statement": {
+          "sqliMatchStatement": {
+            "fieldToMatch": {
+              "allQueryArguments": {}
+            }
+          }
+        },
+        "action": {
+          "block": {}
+        }
+      },
+      {
+        "name": "XSSRule",
+        "priority": 2,
+        "statement": {
+          "xssMatchStatement": {
+            "fieldToMatch": {
+              "body": {}
+            }
+          }
+        },
+        "action": {
+          "block": {}
+        }
+      },
+      {
+        "name": "RateLimitRule",
+        "priority": 3,
+        "statement": {
+          "rateBasedStatement": {
+            "limit": 2000,
+            "aggregateKeyType": "IP"
+          }
+        },
+        "action": {
+          "block": {}
+        }
+      }
+    ]
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>AWS Shield Advanced Features</h4>
+<ul>
+<li><strong>DDoS Protection</strong>: Automatic detection and mitigation</li>
+<li><strong>Attack Notifications</strong>: Real-time attack alerts</li>
+<li><strong>Cost Protection</strong>: DDoS-related cost protection</li>
+<li><strong>24/7 Support</strong>: Access to DDoS Response Team</li>
+</ul>
+<br/>
+<h4>CloudFront Security Features</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "distribution": {
+    "viewerProtocolPolicy": "redirect-to-https",
+    "allowedMethods": ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"],
+    "geoRestriction": {
+      "restrictionType": "blacklist",
+      "locations": ["CN", "RU", "KP"]
+    },
+    "webAclId": "arn:aws:wafv2:us-east-1:account:global/webacl/EmailPlatformWAF"
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>API Security Layer</h3>
+<br/>
+<h4>API Gateway Security Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "apiGateway": {
+    "throttle": {
+      "rateLimit": 1000,
+      "burstLimit": 2000
+    },
+    "requestValidation": {
+      "validateRequestBody": true,
+      "validateRequestParameters": true
+    },
+    "cors": {
+      "allowOrigins": ["https://emailplatform.messagecentre.com"],
+      "allowMethods": ["GET", "POST", "PUT", "DELETE"],
+      "allowHeaders": ["Content-Type", "Authorization", "x-api-key"]
+    },
+    "authorizers": [
+      {
+        "name": "CognitoAuthorizer",
+        "type": "COGNITO_USER_POOLS",
+        "providerARNs": ["arn:aws:cognito-idp:region:account:userpool/pool-id"]
+      }
+    ]
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Rate Limiting Strategy</h4>
+<table>
+<thead>
+<tr>
+<th>Client Type</th>
+<th>Rate Limit</th>
+<th>Burst Limit</th>
+<th>Time Window</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Web UI</td>
+<td>100 req/min</td>
+<td>200 req/min</td>
+<td>1 minute</td>
+</tr>
+<tr>
+<td>API Client</td>
+<td>1000 req/hour</td>
+<td>100 req/min</td>
+<td>1 hour</td>
+</tr>
+<tr>
+<td>Premium API</td>
+<td>10000 req/hour</td>
+<td>500 req/min</td>
+<td>1 hour</td>
+</tr>
+<tr>
+<td>Internal Services</td>
+<td>No limit</td>
+<td>1000 req/min</td>
+<td>1 minute</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Authentication Layer</h3>
+<br/>
+<h4>Cognito User Pool Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "userPool": {
+    "passwordPolicy": {
+      "minimumLength": 12,
+      "requireUppercase": true,
+      "requireLowercase": true,
+      "requireNumbers": true,
+      "requireSymbols": true
+    },
+    "mfaConfiguration": "OPTIONAL",
+    "accountRecoverySetting": {
+      "recoveryMechanisms": [
+        {
+          "name": "verified_email",
+          "priority": 1
+        }
+      ]
+    },
+    "deviceConfiguration": {
+      "challengeRequiredOnNewDevice": true,
+      "deviceOnlyRememberedOnUserPrompt": false
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>SAML Identity Provider Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">xml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+  <IDPSSODescriptor>
+    <KeyDescriptor use="signing">
+      <KeyInfo>
+        <X509Data>
+          <X509Certificate>...</X509Certificate>
+        </X509Data>
+      </KeyInfo>
+    </KeyDescriptor>
+    <SingleSignOnService 
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://idp.company.com/saml/sso"/>
+  </IDPSSODescriptor>
+</EntityDescriptor>
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>JWT Token Validation</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
+
+const client = jwksClient({
+  jwksUri: 'https://cognito-idp.region.amazonaws.com/userPoolId/.well-known/jwks.json'
+});
+
+function validateJWT(token) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, getKey, {
+      audience: 'clientId',
+      issuer: 'https://cognito-idp.region.amazonaws.com/userPoolId',
+      algorithms: ['RS256']
+    }, (err, decoded) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(decoded);
+      }
+    });
+  });
+}
+
+function getKey(header, callback) {
+  client.getSigningKey(header.kid, (err, key) => {
+    const signingKey = key.publicKey || key.rsaPublicKey;
+    callback(null, signingKey);
+  });
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Data Protection Layer</h3>
+<br/>
+<h4>AWS KMS Key Management</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "keyPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "Enable IAM User Permissions",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::account:root"
+        },
+        "Action": "kms:*",
+        "Resource": "*"
+      },
+      {
+        "Sid": "Allow use of the key for Email Platform",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::account:role/EmailPlatformRole"
+        },
+        "Action": [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        "Resource": "*"
+      }
+    ]
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>DynamoDB Encryption Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "table": {
+    "tableName": "EmailPlatform",
+    "sseSpecification": {
+      "enabled": true,
+      "sseType": "KMS",
+      "kmsMasterKeyId": "arn:aws:kms:region:account:key/key-id"
+    },
+    "pointInTimeRecoverySpecification": {
+      "pointInTimeRecoveryEnabled": true
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>S3 Encryption Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "bucket": {
+    "bucketName": "email-platform-storage",
+    "serverSideEncryptionConfiguration": {
+      "rules": [
+        {
+          "applyServerSideEncryptionByDefault": {
+            "sseAlgorithm": "aws:kms",
+            "kmsMasterKeyID": "arn:aws:kms:region:account:key/key-id"
+          },
+          "bucketKeyEnabled": true
+        }
+      ]
+    },
+    "publicAccessBlockConfiguration": {
+      "blockPublicAcls": true,
+      "blockPublicPolicy": true,
+      "ignorePublicAcls": true,
+      "restrictPublicBuckets": true
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Email Security Layer</h3>
+<br/>
+<h4>Amazon SES Security Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "sesConfiguration": {
+    "identityPolicies": {
+      "emailIdentity": "company.com",
+      "policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::account:role/EmailPlatformRole"
+            },
+            "Action": [
+              "ses:SendEmail",
+              "ses:SendRawEmail"
+            ],
+            "Resource": "arn:aws:ses:region:account:identity/company.com"
+          }
+        ]
+      }
+    },
+    "configurationSet": {
+      "name": "EmailPlatformConfigSet",
+      "eventDestinations": [
+        {
+          "name": "CloudWatchDestination",
+          "enabled": true,
+          "matchingEventTypes": [
+            "send",
+            "reject",
+            "bounce",
+            "complaint",
+            "delivery"
+          ]
+        }
+      ]
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Email Authentication Records</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">dns</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+; SPF Record
+company.com. IN TXT "v=spf1 include:amazonses.com ~all"
+
+; DKIM Records (generated by SES)
+selector1._domainkey.company.com. IN CNAME selector1.dkim.amazonses.com
+selector2._domainkey.company.com. IN CNAME selector2.dkim.amazonses.com
+
+; DMARC Record
+_dmarc.company.com. IN TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@company.com; ruf=mailto:dmarc@company.com; sp=quarantine; adkim=r; aspf=r;"
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Monitoring Layer</h3>
+<br/>
+<h4>CloudTrail Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "trail": {
+    "name": "EmailPlatformAuditTrail",
+    "s3BucketName": "email-platform-audit-logs",
+    "includeGlobalServiceEvents": true,
+    "isMultiRegionTrail": true,
+    "enableLogFileValidation": true,
+    "eventSelectors": [
+      {
+        "readWriteType": "All",
+        "includeManagementEvents": true,
+        "dataResources": [
+          {
+            "type": "AWS::DynamoDB::Table",
+            "values": ["arn:aws:dynamodb:*:*:table/EmailPlatform"]
+          },
+          {
+            "type": "AWS::S3::Object",
+            "values": ["arn:aws:s3:::email-platform-storage/*"]
+          }
+        ]
+      }
+    ]
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>GuardDuty Configuration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "detector": {
+    "enable": true,
+    "findingPublishingFrequency": "FIFTEEN_MINUTES",
+    "dataSources": {
+      "s3Logs": {
+        "enable": true
+      },
+      "kubernetesAuditLogs": {
+        "enable": false
+      },
+      "malwareProtection": {
+        "scanEc2InstanceWithFindings": {
+          "ebsVolumes": true
+        }
+      }
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Security Incident Response</h2>
+<br/>
+<h3>Incident Classification</h3>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Description</th>
+<th>Response Time</th>
+<th>Escalation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critical</td>
+<td>Data breach, system compromise</td>
+<td>Immediate</td>
+<td>CISO, Legal</td>
+</tr>
+<tr>
+<td>High</td>
+<td>Service disruption, security vulnerability</td>
+<td>1 hour</td>
+<td>Security Team</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Policy violation, suspicious activity</td>
+<td>4 hours</td>
+<td>Operations Team</td>
+</tr>
+<tr>
+<td>Low</td>
+<td>Minor security event</td>
+<td>24 hours</td>
+<td>Monitoring Team</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Automated Response Actions</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Automated security response
+const securityResponse = {
+  suspiciousActivity: {
+    action: 'blockIP',
+    duration: '1hour',
+    notification: ['security-team@company.com']
+  },
+  
+  dataExfiltration: {
+    action: 'isolateAccount',
+    duration: 'indefinite',
+    notification: ['ciso@company.com', 'legal@company.com']
+  },
+  
+  bruteForceAttack: {
+    action: 'rateLimitIP',
+    duration: '24hours',
+    notification: ['ops-team@company.com']
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Security Metrics and KPIs</h3>
+<ul>
+<li><strong>Mean Time to Detection (MTTD)</strong>: Average time to detect security incidents</li>
+<li><strong>Mean Time to Response (MTTR)</strong>: Average time to respond to incidents</li>
+<li><strong>False Positive Rate</strong>: Percentage of false security alerts</li>
+<li><strong>Security Coverage</strong>: Percentage of assets with security monitoring</li>
+<li><strong>Compliance Score</strong>: Adherence to security policies and standards</li>
+</ul>
+<br/>
+<h2>Compliance and Governance</h2>
+<br/>
+<h3>Regulatory Compliance</h3>
+<ul>
+<li><strong>GDPR</strong>: Data protection and privacy rights</li>
+<li><strong>CCPA</strong>: California Consumer Privacy Act compliance</li>
+<li><strong>SOC 2</strong>: Security and availability controls</li>
+<li><strong>ISO 27001</strong>: Information security management</li>
+</ul>
+<br/>
+<h3>Security Policies</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "securityPolicies": {
+    "passwordPolicy": {
+      "minLength": 12,
+      "complexity": "high",
+      "rotation": "90days",
+      "history": 12
+    },
+    "accessPolicy": {
+      "principleOfLeastPrivilege": true,
+      "regularAccessReview": "quarterly",
+      "privilegedAccessMonitoring": true
+    },
+    "dataClassification": {
+      "public": "no_encryption",
+      "internal": "encryption_at_rest",
+      "confidential": "encryption_at_rest_and_transit",
+      "restricted": "encryption_plus_access_controls"
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Audit and Compliance Reporting</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Generate compliance report
+async function generateComplianceReport(period) {
+  const report = {
+    period: period,
+    securityEvents: await getSecurityEvents(period),
+    accessReviews: await getAccessReviews(period),
+    vulnerabilityScans: await getVulnerabilityScans(period),
+    complianceScore: await calculateComplianceScore(period),
+    recommendations: await getSecurityRecommendations()
+  };
+  
+  return report;
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Security Best Practices</h2>
+<br/>
+<h3>Defense in Depth</h3>
+<ul>
+<li><strong>Multiple Security Layers</strong>: Overlapping security controls</li>
+<li><strong>Fail-Safe Defaults</strong>: Secure by default configuration</li>
+<li><strong>Principle of Least Privilege</strong>: Minimal required access</li>
+<li><strong>Zero Trust Architecture</strong>: Never trust, always verify</li>
+</ul>
+<br/>
+<h3>Continuous Security</h3>
+<ul>
+<li><strong>Security Automation</strong>: Automated security testing and response</li>
+<li><strong>Continuous Monitoring</strong>: Real-time security monitoring</li>
+<li><strong>Regular Assessments</strong>: Periodic security assessments</li>
+<li><strong>Security Training</strong>: Regular security awareness training</li>
+</ul>
+<br/>
+<h3>Incident Prevention</h3>
+<ul>
+<li><strong>Threat Modeling</strong>: Identify and mitigate threats</li>
+<li><strong>Vulnerability Management</strong>: Regular vulnerability scanning</li>
+<li><strong>Penetration Testing</strong>: Regular security testing</li>
+<li><strong>Security Code Review</strong>: Secure coding practices</li>
+</ul>
+<br/>
+</body>
+</html>

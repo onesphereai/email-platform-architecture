@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>README</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Email Platform Architecture</h1>
+<br/>
+<h2>Overview</h2>
+<p>This directory contains the complete architectural documentation for the Email Platform, organized by architectural viewpoints to provide comprehensive coverage of all system aspects.</p>
+<br/>
+<h2>Architectural Views</h2>
+<br/>
+<h3>🔧 [Development View](Development-View/)</h3>
+<p><strong>Focus</strong>: Software components, APIs, development processes, and code structure</p>
+<br/>
+<p><strong>Contents</strong>:</p>
+<ul>
+<li>API specifications and integration patterns</li>
+<li>Component architecture and dependencies</li>
+<li>Business process workflows and sequences</li>
+<li>CI/CD pipeline and development practices</li>
+<li>Software design patterns and standards</li>
+</ul>
+<br/>
+<p><strong>Key Diagrams</strong>:</p>
+<ul>
+<li>Detailed Component Architecture</li>
+<li>API Integration Sequences</li>
+<li>Campaign Creation and Email Sending Workflows</li>
+<li>CI/CD Pipeline Architecture</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>🚀 [Deployment View](Deployment-View/)</h3>
+<p><strong>Focus</strong>: Infrastructure, runtime environment, and operational aspects</p>
+<br/>
+<p><strong>Contents</strong>:</p>
+<ul>
+<li>Infrastructure architecture and AWS services</li>
+<li>Deployment strategies and environment management</li>
+<li>Monitoring, observability, and alerting</li>
+<li>Error handling and recovery procedures</li>
+<li>Performance and scalability considerations</li>
+</ul>
+<br/>
+<p><strong>Key Diagrams</strong>:</p>
+<ul>
+<li>High-Level Infrastructure Architecture</li>
+<li>Monitoring and Observability Architecture</li>
+<li>Error Handling and Recovery Sequences</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>🔒 [Security View](Security-View/)</h3>
+<p><strong>Focus</strong>: Security architecture, authentication, and compliance</p>
+<br/>
+<p><strong>Contents</strong>:</p>
+<ul>
+<li>Multi-layered security architecture</li>
+<li>Authentication and authorization mechanisms</li>
+<li>Data protection and encryption strategies</li>
+<li>Compliance frameworks and governance</li>
+<li>Security monitoring and incident response</li>
+</ul>
+<br/>
+<p><strong>Key Diagrams</strong>:</p>
+<ul>
+<li>Comprehensive Security Architecture</li>
+<li>SAML Authentication Sequences</li>
+<li>Security Control Flows</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>📊 [Data View](Data-View/)</h3>
+<p><strong>Focus</strong>: Data architecture, storage, and analytics</p>
+<br/>
+<p><strong>Contents</strong>:</p>
+<ul>
+<li>Multi-tenant data isolation patterns</li>
+<li>Database design and access patterns</li>
+<li>Analytics and reporting architecture</li>
+<li>Data flow and processing pipelines</li>
+<li>Data governance and privacy controls</li>
+</ul>
+<br/>
+<p><strong>Key Diagrams</strong>:</p>
+<ul>
+<li>Multi-Tenant Data Architecture</li>
+<li>Email Analytics and Delivery Sequences</li>
+<li>Data Flow Patterns</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>💰 [Cost View](Cost-View/)</h3>
+<p><strong>Focus</strong>: Cost analysis, optimization, and financial planning</p>
+<br/>
+<p><strong>Contents</strong>:</p>
+<ul>
+<li>Comprehensive cost breakdown and analysis</li>
+<li>Cost optimization strategies and recommendations</li>
+<li>Pricing models and revenue projections</li>
+<li>Financial planning and ROI analysis</li>
+<li>Cost monitoring and governance</li>
+</ul>
+<br/>
+<p><strong>Key Documents</strong>:</p>
+<ul>
+<li>Detailed Cost Analysis</li>
+<li>Optimization Strategies</li>
+<li>Financial Projections</li>
+</ul>
+<br/>
+<h2>Architecture Principles</h2>
+<br/>
+<h3>Design Principles</h3>
+<ol>
+<li><strong>Scalability</strong>: Design for horizontal and vertical scaling</li>
+<li><strong>Security</strong>: Security by design with defense in depth</li>
+<li><strong>Reliability</strong>: High availability and fault tolerance</li>
+<li><strong>Performance</strong>: Optimized for low latency and high throughput</li>
+<li><strong>Cost Efficiency</strong>: Optimize for cost-effective operations</li>
+<li><strong>Maintainability</strong>: Clean, modular, and well-documented code</li>
+</ol>
+<br/>
+<h3>Technology Principles</h3>
+<ol>
+<li><strong>Cloud-Native</strong>: Leverage AWS managed services</li>
+<li><strong>Serverless-First</strong>: Prefer serverless architectures</li>
+<li><strong>API-First</strong>: Design APIs before implementation</li>
+<li><strong>Event-Driven</strong>: Use asynchronous, event-driven patterns</li>
+<li><strong>Infrastructure as Code</strong>: Automate infrastructure management</li>
+<li><strong>Observability</strong>: Built-in monitoring and logging</li>
+</ol>
+<br/>
+<h3>Business Principles</h3>
+<ol>
+<li><strong>Multi-Tenancy</strong>: Support multiple customers efficiently</li>
+<li><strong>Self-Service</strong>: Enable customer self-service capabilities</li>
+<li><strong>Compliance</strong>: Meet regulatory and industry standards</li>
+<li><strong>Extensibility</strong>: Support future feature expansion</li>
+<li><strong>Integration</strong>: Enable third-party integrations</li>
+<li><strong>User Experience</strong>: Prioritize user experience and usability</li>
+</ol>
+<br/>
+<h2>Cross-Cutting Concerns</h2>
+<br/>
+<h3>Quality Attributes</h3>
+<ul>
+<li><strong>Availability</strong>: 99.9% uptime SLA</li>
+<li><strong>Performance</strong>: &lt;200ms API response time</li>
+<li><strong>Scalability</strong>: Support 10M+ emails per month</li>
+<li><strong>Security</strong>: Enterprise-grade security controls</li>
+<li><strong>Compliance</strong>: GDPR, CCPA, SOC 2 compliance</li>
+<li><strong>Maintainability</strong>: Modular, testable architecture</li>
+</ul>
+<br/>
+<h3>Non-Functional Requirements</h3>
+<ul>
+<li><strong>Disaster Recovery</strong>: 4-hour RTO, 1-hour RPO</li>
+<li><strong>Data Retention</strong>: Configurable retention policies</li>
+<li><strong>Audit Logging</strong>: Comprehensive audit trails</li>
+<li><strong>Monitoring</strong>: Real-time monitoring and alerting</li>
+<li><strong>Documentation</strong>: Comprehensive technical documentation</li>
+<li><strong>Testing</strong>: Automated testing at all levels</li>
+</ul>
+<br/>
+<h2>Architecture Evolution</h2>
+<br/>
+<h3>Current State (v1.0)</h3>
+<ul>
+<li>MVP implementation with core features</li>
+<li>Basic multi-tenancy and security</li>
+<li>Essential monitoring and operations</li>
+<li>Foundational API and UI components</li>
+</ul>
+<br/>
+<h3>Future State (v2.0+)</h3>
+<ul>
+<li>Advanced analytics and AI features</li>
+<li>Enhanced automation and workflows</li>
+<li>Global deployment and edge computing</li>
+<li>Advanced security and compliance features</li>
+<li>Comprehensive integration ecosystem</li>
+</ul>
+<br/>
+<h2>Getting Started</h2>
+<br/>
+<h3>For Developers</h3>
+<ol>
+<li>Review the <a href="Development-View/">Development View</a> for API specifications</li>
+<li>Understand component architecture and dependencies</li>
+<li>Follow development workflows and coding standards</li>
+<li>Implement features using established patterns</li>
+</ol>
+<br/>
+<h3>For Operations</h3>
+<ol>
+<li>Study the <a href="Deployment-View/">Deployment View</a> for infrastructure</li>
+<li>Understand monitoring and alerting procedures</li>
+<li>Follow deployment and rollback procedures</li>
+<li>Implement operational best practices</li>
+</ol>
+<br/>
+<h3>For Security Teams</h3>
+<ol>
+<li>Review the <a href="Security-View/">Security View</a> for security architecture</li>
+<li>Understand authentication and authorization flows</li>
+<li>Implement security monitoring and incident response</li>
+<li>Ensure compliance with regulatory requirements</li>
+</ol>
+<br/>
+<h3>For Data Teams</h3>
+<ol>
+<li>Examine the <a href="Data-View/">Data View</a> for data architecture</li>
+<li>Understand multi-tenant data patterns</li>
+<li>Implement analytics and reporting features</li>
+<li>Ensure data governance and privacy compliance</li>
+</ol>
+<br/>
+<h3>For Finance Teams</h3>
+<ol>
+<li>Review the <a href="Cost-View/">Cost View</a> for cost analysis</li>
+<li>Understand pricing models and cost drivers</li>
+<li>Implement cost monitoring and optimization</li>
+<li>Plan financial projections and budgets</li>
+</ol>
+<br/>
+<h2>Documentation Standards</h2>
+<br/>
+<h3>Diagram Standards</h3>
+<ul>
+<li>Use consistent notation and symbols</li>
+<li>Include clear legends and annotations</li>
+<li>Provide flow descriptions for complex diagrams</li>
+<li>Maintain version control for all diagrams</li>
+</ul>
+<br/>
+<h3>Documentation Standards</h3>
+<ul>
+<li>Follow markdown formatting guidelines</li>
+<li>Include code examples and configurations</li>
+<li>Provide step-by-step procedures</li>
+<li>Maintain cross-references and links</li>
+</ul>
+<br/>
+<h3>Review Process</h3>
+<ul>
+<li>Regular architecture reviews and updates</li>
+<li>Stakeholder feedback and approval</li>
+<li>Version control and change management</li>
+<li>Documentation quality assurance</li>
+</ul>
+<br/>
+</body>
+</html>

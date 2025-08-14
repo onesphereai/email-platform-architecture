@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>01_high_level_architecture_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>High Level Architecture - Flow Description</h1>
+<br/>
+<p><strong>Diagram</strong>: <code>01<em>high</em>level_architecture.png</code></p>
+<br/>
+<h2>Overview</h2>
+<p>This diagram shows the complete high-level architecture of the Email Platform, including user access, core services, data flow, and external integrations.</p>
+<br/>
+<h2>Flow Description</h2>
+<br/>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Source</th>
+<th>Target</th>
+<th>Action</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>B2B Customers</td>
+<td>Internet</td>
+<td>Access Platform</td>
+<td>Users access the Email Platform through the internet</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Internet</td>
+<td>CloudFront CDN</td>
+<td>Route Traffic</td>
+<td>Internet traffic is routed through AWS CloudFront CDN</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CloudFront CDN</td>
+<td>S3 Static Website</td>
+<td>Serve Static Content</td>
+<td>CDN serves the Angular application static files from S3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CloudFront CDN</td>
+<td>API Gateway</td>
+<td>API Requests</td>
+<td>Dynamic API requests are forwarded to API Gateway</td>
+</tr>
+<tr>
+<td>5</td>
+<td>API Gateway</td>
+<td>AWS Cognito</td>
+<td>Authenticate</td>
+<td>API Gateway validates user authentication through Cognito</td>
+</tr>
+<tr>
+<td>6</td>
+<td>API Gateway</td>
+<td>Email Platform UI Backend</td>
+<td>UI Requests</td>
+<td>Authenticated UI requests are routed to the UI backend service</td>
+</tr>
+<tr>
+<td>7</td>
+<td>API Gateway</td>
+<td>Email API</td>
+<td>API Requests</td>
+<td>External API requests are routed to the standalone Email API</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Email Platform UI Backend</td>
+<td>Campaign Manager</td>
+<td>Campaign Operations</td>
+<td>UI backend delegates campaign operations to the Campaign Manager</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Email API</td>
+<td>Email Processor</td>
+<td>Email Processing</td>
+<td>API requests trigger email processing workflows</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Campaign Manager</td>
+<td>Email Queue (SQS)</td>
+<td>Queue Messages</td>
+<td>Campaign operations are queued for asynchronous processing</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Email Processor</td>
+<td>Email Queue (SQS)</td>
+<td>Process Queue</td>
+<td>Email processor consumes messages from the queue</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Email Queue (SQS)</td>
+<td>Amazon SES</td>
+<td>Send Emails</td>
+<td>Queued email jobs are processed and sent via Amazon SES</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Amazon SES</td>
+<td>SNS Notification Topic</td>
+<td>Delivery Status</td>
+<td>SES publishes delivery status events to SNS</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Email Platform UI Backend</td>
+<td>DynamoDB</td>
+<td>Store Data</td>
+<td>UI operations store data in the single-table DynamoDB</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Email API</td>
+<td>DynamoDB</td>
+<td>Store Data</td>
+<td>API operations store campaign and user data</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Campaign Manager</td>
+<td>S3 Storage</td>
+<td>Store Templates</td>
+<td>Email templates and assets are stored in S3</td>
+</tr>
+<tr>
+<td>17</td>
+<td>SNS Notification Topic</td>
+<td>Analytics Engine</td>
+<td>Analytics Data</td>
+<td>Delivery events trigger analytics processing</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Analytics Engine</td>
+<td>OpenSearch Serverless</td>
+<td>Index Data</td>
+<td>Analytics data is indexed in OpenSearch for reporting</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Email Platform UI Backend</td>
+<td>CloudWatch</td>
+<td>Logs &amp; Metrics</td>
+<td>Application logs and metrics are sent to CloudWatch</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Email API</td>
+<td>CloudWatch</td>
+<td>Logs &amp; Metrics</td>
+<td>API logs and performance metrics are monitored</td>
+</tr>
+<tr>
+<td>21</td>
+<td>External Systems</td>
+<td>Message Centre</td>
+<td>Push Data</td>
+<td>External systems push data to Message Centre for reporting</td>
+</tr>
+<tr>
+<td>22</td>
+<td>Message Centre</td>
+<td>Email API</td>
+<td>Report Data</td>
+<td>Message Centre sends reporting data to the Email Platform</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Bitbucket</td>
+<td>Jenkins</td>
+<td>Code Changes</td>
+<td>Code changes trigger Jenkins CI/CD pipeline</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Jenkins</td>
+<td>Email Platform UI Backend</td>
+<td>Deploy</td>
+<td>Jenkins deploys updates to the platform services</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Key Components</h2>
+<br/>
+<h3>Frontend Layer</h3>
+<ul>
+<li><strong>CloudFront CDN</strong>: Global content delivery network for static assets</li>
+<li><strong>S3 Static Website</strong>: Hosts the Angular application files</li>
+</ul>
+<br/>
+<h3>API Layer</h3>
+<ul>
+<li><strong>API Gateway</strong>: Centralized API management with authentication and rate limiting</li>
+<li><strong>AWS Cognito</strong>: SAML-based authentication and user management</li>
+</ul>
+<br/>
+<h3>Backend Services</h3>
+<ul>
+<li><strong>Email Platform UI Backend</strong>: Handles web application requests</li>
+<li><strong>Email API</strong>: Standalone API for programmatic access</li>
+<li><strong>Campaign Manager</strong>: Manages email campaign lifecycle</li>
+<li><strong>Email Processor</strong>: Processes and sends email batches</li>
+<li><strong>Analytics Engine</strong>: Processes delivery and engagement metrics</li>
+</ul>
+<br/>
+<h3>Data Layer</h3>
+<ul>
+<li><strong>DynamoDB</strong>: Single-table design for all application data</li>
+<li><strong>S3 Storage</strong>: File storage for templates and assets</li>
+<li><strong>OpenSearch Serverless</strong>: Analytics and search capabilities</li>
+</ul>
+<br/>
+<h3>Email Service</h3>
+<ul>
+<li><strong>Amazon SES</strong>: Email delivery service with reputation management</li>
+</ul>
+<br/>
+<h3>Message Processing</h3>
+<ul>
+<li><strong>SQS Email Queue</strong>: Reliable message queuing for email processing</li>
+<li><strong>SNS Notification Topic</strong>: Event-driven notifications</li>
+</ul>
+<br/>
+<h3>Monitoring</h3>
+<ul>
+<li><strong>CloudWatch</strong>: Centralized logging and monitoring</li>
+</ul>
+<br/>
+<h3>External Integration</h3>
+<ul>
+<li><strong>Message Centre</strong>: External reporting integration</li>
+<li><strong>Jenkins CI/CD</strong>: Continuous integration and deployment</li>
+</ul>
+<br/>
+<h2>Data Flow Patterns</h2>
+<br/>
+<h3>User Request Flow</h3>
+<ol>
+<li>User accesses platform → CDN → Static content served</li>
+<li>API requests → API Gateway → Authentication → Backend services</li>
+</ol>
+<br/>
+<h3>Email Processing Flow</h3>
+<ol>
+<li>Campaign creation → Queue → Asynchronous processing → SES delivery</li>
+<li>Delivery events → SNS → Analytics → OpenSearch indexing</li>
+</ol>
+<br/>
+<h3>External Integration Flow</h3>
+<ol>
+<li>External systems → Message Centre → Email Platform API</li>
+<li>Cross-platform data sharing and reporting</li>
+</ol>
+<br/>
+<h2>Security Considerations</h2>
+<ul>
+<li>All traffic flows through secure HTTPS connections</li>
+<li>Authentication required at API Gateway level</li>
+<li>Data encryption at rest and in transit</li>
+<li>Audit logging through CloudWatch</li>
+</ul>
+<br/>
+<h2>Scalability Features</h2>
+<ul>
+<li>CDN for global content delivery</li>
+<li>Serverless architecture with auto-scaling</li>
+<li>Queue-based processing for high throughput</li>
+<li>Managed services for operational efficiency</li>
+</ul>
+<br/>
+</body>
+</html>

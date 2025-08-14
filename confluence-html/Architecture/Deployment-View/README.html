@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>README</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Deployment View</h1>
+<br/>
+<h2>Overview</h2>
+<p>The Deployment View describes the system&#x27;s runtime environment, infrastructure components, deployment strategies, and operational considerations.</p>
+<br/>
+<h2>Contents</h2>
+<br/>
+<h3>Infrastructure Architecture</h3>
+<ul>
+<li><strong><a href="01<em>high</em>level_architecture.png">High Level Architecture</a></strong> - Complete platform infrastructure</li>
+<li><strong><a href="16<em>clean</em>high<em>level</em>architecture.png">Clean High Level Architecture</a></strong> - Simplified infrastructure view</li>
+</ul>
+<br/>
+<h3>Monitoring &amp; Operations</h3>
+<ul>
+<li><strong><a href="08<em>monitoring</em>observability.png">Monitoring &amp; Observability</a></strong> - Comprehensive monitoring architecture</li>
+<li><strong><a href="21<em>clean</em>monitoring_observability.png">Clean Monitoring &amp; Observability</a></strong> - Simplified monitoring view</li>
+</ul>
+<br/>
+<h3>Error Handling &amp; Recovery</h3>
+<ul>
+<li><strong><a href="15<em>error</em>handling_sequence.png">Error Handling Sequence</a></strong> - Error handling and recovery workflow</li>
+</ul>
+<br/>
+<h3>Flow Descriptions</h3>
+<ul>
+<li><strong><a href="01<em>high</em>level<em>architecture</em>flow.md">High Level Architecture Flow</a></strong> - 24-step complete platform flow</li>
+<li><strong><a href="16<em>clean</em>high<em>level</em>architecture_flow.md">Clean Architecture Flow</a></strong> - Simplified component analysis</li>
+<li><strong><a href="15<em>error</em>handling<em>sequence</em>flow.md">Error Handling Flow</a></strong> - 30-step error recovery process</li>
+</ul>
+<br/>
+<h2>Infrastructure Components</h2>
+<br/>
+<h3>AWS Services</h3>
+<ul>
+<li><strong>Compute</strong>: AWS Lambda (serverless functions)</li>
+<li><strong>API Management</strong>: Amazon API Gateway</li>
+<li><strong>Content Delivery</strong>: Amazon CloudFront</li>
+<li><strong>Storage</strong>: Amazon S3, Amazon DynamoDB</li>
+<li><strong>Email Service</strong>: Amazon SES</li>
+<li><strong>Message Queuing</strong>: Amazon SQS, SNS</li>
+<li><strong>Analytics</strong>: Amazon OpenSearch Serverless</li>
+<li><strong>Monitoring</strong>: Amazon CloudWatch, AWS X-Ray</li>
+<li><strong>Security</strong>: AWS WAF, AWS Shield, AWS Cognito</li>
+</ul>
+<br/>
+<h3>Deployment Architecture</h3>
+<ul>
+<li><strong>Multi-AZ Deployment</strong>: High availability across availability zones</li>
+<li><strong>Auto-scaling</strong>: Automatic scaling based on demand</li>
+<li><strong>Load Balancing</strong>: Distributed traffic handling</li>
+<li><strong>CDN</strong>: Global content delivery network</li>
+</ul>
+<br/>
+<h3>Environment Strategy</h3>
+<ul>
+<li><strong>Development</strong>: Feature development and testing</li>
+<li><strong>Staging</strong>: Pre-production validation</li>
+<li><strong>Production</strong>: Live customer environment</li>
+</ul>
+<br/>
+<h2>Deployment Strategies</h2>
+<br/>
+<h3>CI/CD Pipeline</h3>
+<ol>
+<li><strong>Source Control</strong>: Bitbucket with branch protection</li>
+<li><strong>Build Process</strong>: Jenkins-based automation</li>
+<li><strong>Testing</strong>: Automated test execution</li>
+<li><strong>Deployment</strong>: Serverless Framework deployment</li>
+<li><strong>Verification</strong>: Health checks and smoke tests</li>
+</ol>
+<br/>
+<h3>Deployment Patterns</h3>
+<ul>
+<li><strong>Blue/Green Deployment</strong>: Zero-downtime deployments</li>
+<li><strong>Canary Deployment</strong>: Gradual rollout strategy</li>
+<li><strong>Rolling Deployment</strong>: Sequential instance updates</li>
+<li><strong>Rollback Strategy</strong>: Quick rollback capabilities</li>
+</ul>
+<br/>
+<h3>Infrastructure as Code</h3>
+<ul>
+<li><strong>Serverless Framework</strong>: Application infrastructure</li>
+<li><strong>CloudFormation</strong>: AWS resource provisioning</li>
+<li><strong>Version Control</strong>: Infrastructure versioning</li>
+<li><strong>Environment Parity</strong>: Consistent environments</li>
+</ul>
+<br/>
+<h2>Operational Excellence</h2>
+<br/>
+<h3>Monitoring Strategy</h3>
+<ul>
+<li><strong>Application Monitoring</strong>: Performance and error tracking</li>
+<li><strong>Infrastructure Monitoring</strong>: Resource utilization</li>
+<li><strong>Business Monitoring</strong>: Key performance indicators</li>
+<li><strong>Security Monitoring</strong>: Threat detection and response</li>
+</ul>
+<br/>
+<h3>Alerting Framework</h3>
+<ul>
+<li><strong>Critical Alerts</strong>: Immediate response required</li>
+<li><strong>Warning Alerts</strong>: Attention needed</li>
+<li><strong>Info Alerts</strong>: Informational notifications</li>
+<li><strong>Escalation Policies</strong>: Alert escalation procedures</li>
+</ul>
+<br/>
+<h3>Disaster Recovery</h3>
+<ul>
+<li><strong>Backup Strategy</strong>: Automated data backups</li>
+<li><strong>Recovery Procedures</strong>: Documented recovery steps</li>
+<li><strong>RTO/RPO Targets</strong>: Recovery time and point objectives</li>
+<li><strong>Business Continuity</strong>: Service continuity planning</li>
+</ul>
+<br/>
+<h2>Performance &amp; Scalability</h2>
+<br/>
+<h3>Scalability Patterns</h3>
+<ul>
+<li><strong>Horizontal Scaling</strong>: Adding more instances</li>
+<li><strong>Vertical Scaling</strong>: Increasing instance capacity</li>
+<li><strong>Auto-scaling</strong>: Automatic capacity adjustment</li>
+<li><strong>Load Distribution</strong>: Traffic distribution strategies</li>
+</ul>
+<br/>
+<h3>Performance Optimization</h3>
+<ul>
+<li><strong>Caching</strong>: Multi-level caching strategy</li>
+<li><strong>CDN</strong>: Global content delivery</li>
+<li><strong>Database Optimization</strong>: Query and index optimization</li>
+<li><strong>Connection Pooling</strong>: Efficient resource utilization</li>
+</ul>
+<br/>
+<h3>Capacity Planning</h3>
+<ul>
+<li><strong>Resource Monitoring</strong>: Continuous capacity monitoring</li>
+<li><strong>Growth Projections</strong>: Capacity planning based on growth</li>
+<li><strong>Bottleneck Identification</strong>: Performance bottleneck analysis</li>
+<li><strong>Scaling Triggers</strong>: Automated scaling thresholds</li>
+</ul>
+<br/>
+</body>
+</html>

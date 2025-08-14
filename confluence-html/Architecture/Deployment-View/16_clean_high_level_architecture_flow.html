@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>16_clean_high_level_architecture_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Clean High Level Architecture - Flow Description</h1>
+<br/>
+<p><strong>Diagram</strong>: <code>16<em>clean</em>high<em>level</em>architecture.png</code></p>
+<br/>
+<h2>Overview</h2>
+<p>This diagram presents a simplified, clean view of the Email Platform&#x27;s high-level architecture, focusing on the core components and their relationships without the complexity of numbered flows.</p>
+<br/>
+<h2>Component Flow Analysis</h2>
+<br/>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Type</th>
+<th>Purpose</th>
+<th>Connections</th>
+<th>Data Flow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B2B Customers</td>
+<td>External User</td>
+<td>Platform users accessing email services</td>
+<td>→ Internet → CloudFront</td>
+<td>User requests and interactions</td>
+</tr>
+<tr>
+<td>Internet</td>
+<td>Network Layer</td>
+<td>Global network connectivity</td>
+<td>CloudFront ↔ Users</td>
+<td>Bidirectional web traffic</td>
+</tr>
+<tr>
+<td>CloudFront</td>
+<td>CDN</td>
+<td>Content delivery and caching</td>
+<td>← Internet, → Angular App, → API Gateway</td>
+<td>Static content delivery and API routing</td>
+</tr>
+<tr>
+<td>Angular App</td>
+<td>Frontend</td>
+<td>User interface application</td>
+<td>← CloudFront, → API Gateway</td>
+<td>UI rendering and API calls</td>
+</tr>
+<tr>
+<td>API Gateway</td>
+<td>API Layer</td>
+<td>Request routing and management</td>
+<td>← CloudFront, ← Angular App, → Cognito Auth, → UI Service, → Email API</td>
+<td>Request validation and routing</td>
+</tr>
+<tr>
+<td>Cognito Auth</td>
+<td>Authentication</td>
+<td>User authentication and authorization</td>
+<td>← API Gateway</td>
+<td>Authentication tokens and user validation</td>
+</tr>
+<tr>
+<td>UI Service</td>
+<td>Backend Service</td>
+<td>Web application backend logic</td>
+<td>← API Gateway, → Campaign Manager, → CloudWatch</td>
+<td>UI-specific business logic</td>
+</tr>
+<tr>
+<td>Email API</td>
+<td>Backend Service</td>
+<td>Standalone email API service</td>
+<td>← API Gateway, ← Message Centre, → Campaign Manager</td>
+<td>Programmatic email operations</td>
+</tr>
+<tr>
+<td>Campaign Manager</td>
+<td>Core Service</td>
+<td>Email campaign management</td>
+<td>← UI Service, ← Email API, → Email Queue, → S3 Storage</td>
+<td>Campaign lifecycle management</td>
+</tr>
+<tr>
+<td>Email Queue</td>
+<td>Message Queue</td>
+<td>Asynchronous email processing</td>
+<td>← Campaign Manager, → Email Processor</td>
+<td>Message queuing and batch processing</td>
+</tr>
+<tr>
+<td>Email Processor</td>
+<td>Processing Service</td>
+<td>Email processing and delivery</td>
+<td>← Email Queue, → Amazon SES, → DynamoDB, → OpenSearch</td>
+<td>Email rendering and sending</td>
+</tr>
+<tr>
+<td>DynamoDB</td>
+<td>Database</td>
+<td>Primary data storage</td>
+<td>← Email Processor</td>
+<td>Campaign data, user data, analytics</td>
+</tr>
+<tr>
+<td>S3 Storage</td>
+<td>File Storage</td>
+<td>Template and asset storage</td>
+<td>← Campaign Manager</td>
+<td>Email templates, images, attachments</td>
+</tr>
+<tr>
+<td>Amazon SES</td>
+<td>Email Service</td>
+<td>Email delivery service</td>
+<td>← Email Processor</td>
+<td>Email sending and delivery tracking</td>
+</tr>
+<tr>
+<td>OpenSearch</td>
+<td>Analytics</td>
+<td>Search and analytics platform</td>
+<td>← Email Processor</td>
+<td>Email analytics and reporting</td>
+</tr>
+<tr>
+<td>CloudWatch</td>
+<td>Monitoring</td>
+<td>Logging and monitoring</td>
+<td>← UI Service</td>
+<td>Application logs and metrics</td>
+</tr>
+<tr>
+<td>Message Centre</td>
+<td>External System</td>
+<td>External reporting integration</td>
+<td>→ Email API</td>
+<td>Cross-platform data integration</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Architectural Patterns</h2>
+<br/>
+<h3>Frontend Architecture</h3>
+<ul>
+<li><strong>Single Page Application (SPA)</strong>: Angular-based reactive UI</li>
+<li><strong>Content Delivery Network</strong>: Global content distribution via CloudFront</li>
+<li><strong>Static Asset Optimization</strong>: Cached static resources for performance</li>
+<li><strong>Progressive Web App</strong>: Responsive design for multiple devices</li>
+</ul>
+<br/>
+<h3>API Architecture</h3>
+<ul>
+<li><strong>API Gateway Pattern</strong>: Centralized API management and routing</li>
+<li><strong>Microservices</strong>: Separate services for UI and Email API functionality</li>
+<li><strong>Authentication Gateway</strong>: Centralized authentication through Cognito</li>
+<li><strong>Rate Limiting</strong>: Built-in request throttling and quota management</li>
+</ul>
+<br/>
+<h3>Backend Architecture</h3>
+<ul>
+<li><strong>Serverless Computing</strong>: AWS Lambda-based processing</li>
+<li><strong>Event-Driven Architecture</strong>: Asynchronous processing with queues</li>
+<li><strong>Service Separation</strong>: Distinct services for different concerns</li>
+<li><strong>Stateless Design</strong>: No server-side session state</li>
+</ul>
+<br/>
+<h3>Data Architecture</h3>
+<ul>
+<li><strong>Single Table Design</strong>: Optimized DynamoDB schema</li>
+<li><strong>Polyglot Persistence</strong>: Different storage for different data types</li>
+<li><strong>Analytics Separation</strong>: Dedicated analytics platform</li>
+<li><strong>File Storage</strong>: Separate storage for templates and assets</li>
+</ul>
+<br/>
+<h2>Data Flow Patterns</h2>
+<br/>
+<h3>User Request Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+B2B Customers → Internet → CloudFront → Angular App
+                                    ↓
+                              API Gateway → Authentication
+                                    ↓
+                            UI Service/Email API
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Email Processing Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Campaign Manager → Email Queue → Email Processor → Amazon SES
+                                        ↓
+                              DynamoDB + OpenSearch
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>External Integration Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Message Centre → Email API → Campaign Manager → Processing Pipeline
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Monitoring Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+All Services → CloudWatch → Monitoring Dashboard
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Component Responsibilities</h2>
+<br/>
+<h3>Frontend Layer</h3>
+<ul>
+<li><strong>CloudFront</strong>: </li>
+<ul>
+<li>Global content delivery</li>
+<li>SSL termination</li>
+<li>Request routing</li>
+<li>Caching strategy</li>
+</ul>
+<li><strong>Angular App</strong>:</li>
+<ul>
+<li>User interface rendering</li>
+<li>Client-side routing</li>
+<li>State management</li>
+<li>API communication</li>
+</ul>
+</ul>
+<br/>
+<h3>API Layer</h3>
+<ul>
+<li><strong>API Gateway</strong>:</li>
+<ul>
+<li>Request validation</li>
+<li>Authentication enforcement</li>
+<li>Rate limiting</li>
+<li>Request/response transformation</li>
+</ul>
+<li><strong>Cognito Auth</strong>:</li>
+<ul>
+<li>SAML integration</li>
+<li>JWT token management</li>
+<li>User pool management</li>
+<li>Multi-factor authentication</li>
+</ul>
+</ul>
+<br/>
+<h3>Backend Services</h3>
+<ul>
+<li><strong>UI Service</strong>:</li>
+<ul>
+<li>Web application logic</li>
+<li>User session management</li>
+<li>Dashboard data aggregation</li>
+<li>Template management UI</li>
+</ul>
+<li><strong>Email API</strong>:</li>
+<ul>
+<li>Programmatic email operations</li>
+<li>Campaign creation and management</li>
+<li>Webhook management</li>
+<li>External system integration</li>
+</ul>
+</ul>
+<br/>
+<h3>Core Services</h3>
+<ul>
+<li><strong>Campaign Manager</strong>:</li>
+<ul>
+<li>Campaign lifecycle management</li>
+<li>Template processing</li>
+<li>Recipient list management</li>
+<li>Scheduling and queuing</li>
+</ul>
+<li><strong>Email Processor</strong>:</li>
+<ul>
+<li>Email rendering and personalization</li>
+<li>Batch processing</li>
+<li>Delivery optimization</li>
+<li>Status tracking</li>
+</ul>
+</ul>
+<br/>
+<h3>Data Layer</h3>
+<ul>
+<li><strong>DynamoDB</strong>:</li>
+<ul>
+<li>Campaign metadata</li>
+<li>User profiles</li>
+<li>Delivery statistics</li>
+<li>Configuration data</li>
+</ul>
+<li><strong>S3 Storage</strong>:</li>
+<ul>
+<li>Email templates</li>
+<li>Image assets</li>
+<li>Export files</li>
+<li>Backup data</li>
+</ul>
+</ul>
+<br/>
+<h3>External Services</h3>
+<ul>
+<li><strong>Amazon SES</strong>:</li>
+<ul>
+<li>Email delivery</li>
+<li>Bounce handling</li>
+<li>Reputation management</li>
+<li>Domain authentication</li>
+</ul>
+<li><strong>OpenSearch</strong>:</li>
+<ul>
+<li>Email analytics</li>
+<li>Search capabilities</li>
+<li>Dashboard data</li>
+<li>Reporting metrics</li>
+</ul>
+</ul>
+<br/>
+<h2>Scalability Considerations</h2>
+<br/>
+<h3>Horizontal Scaling</h3>
+<ul>
+<li><strong>Serverless Auto-scaling</strong>: Lambda functions scale automatically</li>
+<li><strong>Database Scaling</strong>: DynamoDB on-demand scaling</li>
+<li><strong>CDN Scaling</strong>: CloudFront global distribution</li>
+<li><strong>Queue Scaling</strong>: SQS automatic scaling</li>
+</ul>
+<br/>
+<h3>Performance Optimization</h3>
+<ul>
+<li><strong>Caching Strategy</strong>: Multi-level caching (CDN, application, database)</li>
+<li><strong>Asynchronous Processing</strong>: Queue-based email processing</li>
+<li><strong>Connection Pooling</strong>: Efficient database connections</li>
+<li><strong>Batch Operations</strong>: Optimized batch processing</li>
+</ul>
+<br/>
+<h3>Geographic Distribution</h3>
+<ul>
+<li><strong>Multi-Region Deployment</strong>: Support for global users</li>
+<li><strong>Data Residency</strong>: Compliance with local data laws</li>
+<li><strong>Edge Locations</strong>: CloudFront edge caching</li>
+<li><strong>Regional Failover</strong>: Disaster recovery capabilities</li>
+</ul>
+<br/>
+<h2>Security Architecture</h2>
+<br/>
+<h3>Network Security</h3>
+<ul>
+<li><strong>HTTPS Everywhere</strong>: All communications encrypted</li>
+<li><strong>VPC Isolation</strong>: Private network segments</li>
+<li><strong>Security Groups</strong>: Network-level access control</li>
+<li><strong>WAF Protection</strong>: Web application firewall</li>
+</ul>
+<br/>
+<h3>Authentication Security</h3>
+<ul>
+<li><strong>SAML Integration</strong>: Enterprise identity provider integration</li>
+<li><strong>JWT Tokens</strong>: Stateless authentication</li>
+<li><strong>Multi-Factor Authentication</strong>: Enhanced security</li>
+<li><strong>Session Management</strong>: Secure session handling</li>
+</ul>
+<br/>
+<h3>Data Security</h3>
+<ul>
+<li><strong>Encryption at Rest</strong>: All data encrypted in storage</li>
+<li><strong>Encryption in Transit</strong>: All communications encrypted</li>
+<li><strong>Key Management</strong>: AWS KMS for key management</li>
+<li><strong>Access Control</strong>: Fine-grained permissions</li>
+</ul>
+<br/>
+<h2>Integration Patterns</h2>
+<br/>
+<h3>External System Integration</h3>
+<ul>
+<li><strong>API-First Design</strong>: RESTful API for all operations</li>
+<li><strong>Webhook Support</strong>: Real-time event notifications</li>
+<li><strong>Message Centre Integration</strong>: Cross-platform data sharing</li>
+<li><strong>Third-Party APIs</strong>: Extensible integration framework</li>
+</ul>
+<br/>
+<h3>Internal Service Communication</h3>
+<ul>
+<li><strong>Service Mesh</strong>: Secure service-to-service communication</li>
+<li><strong>Event-Driven Architecture</strong>: Asynchronous event processing</li>
+<li><strong>Circuit Breaker</strong>: Fault tolerance patterns</li>
+<li><strong>Retry Logic</strong>: Resilient communication patterns</li>
+</ul>
+<br/>
+<h2>Operational Excellence</h2>
+<br/>
+<h3>Monitoring and Observability</h3>
+<ul>
+<li><strong>Centralized Logging</strong>: CloudWatch log aggregation</li>
+<li><strong>Metrics Collection</strong>: Custom and system metrics</li>
+<li><strong>Distributed Tracing</strong>: Request flow tracking</li>
+<li><strong>Health Checks</strong>: Service health monitoring</li>
+</ul>
+<br/>
+<h3>Deployment and Operations</h3>
+<ul>
+<li><strong>Infrastructure as Code</strong>: Automated infrastructure management</li>
+<li><strong>CI/CD Pipeline</strong>: Automated deployment pipeline</li>
+<li><strong>Blue/Green Deployment</strong>: Zero-downtime deployments</li>
+<li><strong>Rollback Capability</strong>: Quick rollback procedures</li>
+</ul>
+<br/>
+<h3>Cost Optimization</h3>
+<ul>
+<li><strong>Pay-per-Use</strong>: Serverless cost model</li>
+<li><strong>Resource Right-Sizing</strong>: Optimal resource allocation</li>
+<li><strong>Reserved Capacity</strong>: Cost optimization for predictable workloads</li>
+<li><strong>Usage Monitoring</strong>: Cost tracking and optimization</li>
+</ul>
+<br/>
+</body>
+</html>

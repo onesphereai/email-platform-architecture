@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>12_api_integration_sequence_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>API Client Integration - Flow Description</h1>
+<br/>
+<p><strong>Diagram</strong>: <code>12<em>api</em>integration_sequence.png</code></p>
+<br/>
+<h2>Overview</h2>
+<p>This sequence diagram shows how external API clients integrate with the Email Platform, including authentication, campaign processing, asynchronous email delivery, and webhook notifications.</p>
+<br/>
+<h2>Sequence Flow</h2>
+<br/>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Source</th>
+<th>Target</th>
+<th>Method/Action</th>
+<th>Description</th>
+<th>Response/Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>External API Client</td>
+<td>API Gateway</td>
+<td>POST /campaigns + x-api-key</td>
+<td>Client sends campaign creation request with API key</td>
+<td>Request received</td>
+</tr>
+<tr>
+<td>2</td>
+<td>API Gateway</td>
+<td>Auth Service</td>
+<td>validateApiKey()</td>
+<td>Gateway validates the provided API key</td>
+<td>Key validation initiated</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Auth Service</td>
+<td>API Gateway</td>
+<td>return valid</td>
+<td>Auth service confirms API key is valid</td>
+<td>Validation confirmed</td>
+</tr>
+<tr>
+<td>4</td>
+<td>API Gateway</td>
+<td>Email API</td>
+<td>routeRequest()</td>
+<td>Gateway routes authenticated request to Email API</td>
+<td>Request routed</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Email API</td>
+<td>Email API</td>
+<td>validateCampaignData()</td>
+<td>API validates campaign data structure and content</td>
+<td>Data validated</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Email API</td>
+<td>Template Service</td>
+<td>processTemplate()</td>
+<td>API sends template for processing and validation</td>
+<td>Template processing started</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Template Service</td>
+<td>Email API</td>
+<td>return templateId</td>
+<td>Service returns processed template identifier</td>
+<td>Template ID received</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Email API</td>
+<td>Recipient Service</td>
+<td>validateRecipients()</td>
+<td>API sends recipient list for validation</td>
+<td>Recipient validation started</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Recipient Service</td>
+<td>Email API</td>
+<td>return validatedList</td>
+<td>Service returns validated recipient list</td>
+<td>Validated list received</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Email API</td>
+<td>DynamoDB</td>
+<td>saveCampaign()</td>
+<td>API stores campaign data in database</td>
+<td>Campaign data stored</td>
+</tr>
+<tr>
+<td>11</td>
+<td>DynamoDB</td>
+<td>Email API</td>
+<td>return campaignId</td>
+<td>Database returns unique campaign identifier</td>
+<td>Campaign ID received</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Email API</td>
+<td>Email Queue</td>
+<td>queueEmailJob()</td>
+<td>API queues email processing job</td>
+<td>Job queued</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Email API</td>
+<td>API Gateway</td>
+<td>return campaign</td>
+<td>API returns campaign details</td>
+<td>Campaign data returned</td>
+</tr>
+<tr>
+<td>14</td>
+<td>API Gateway</td>
+<td>External API Client</td>
+<td>return 201 Created</td>
+<td>Gateway returns success response</td>
+<td>Campaign created confirmation</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Email Queue</td>
+<td>Email Processor</td>
+<td>processBatch()</td>
+<td>Queue triggers batch processing</td>
+<td>Batch processing started</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Email Processor</td>
+<td>Amazon SES</td>
+<td>sendEmails()</td>
+<td>Processor sends emails via SES</td>
+<td>Emails sent for delivery</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Amazon SES</td>
+<td>Email Processor</td>
+<td>return deliveryStatus</td>
+<td>SES returns delivery status</td>
+<td>Status received</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Email Processor</td>
+<td>DynamoDB</td>
+<td>updateStatus()</td>
+<td>Processor updates campaign status</td>
+<td>Status updated</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Email Processor</td>
+<td>Webhook Service</td>
+<td>triggerWebhook()</td>
+<td>Processor triggers webhook notification</td>
+<td>Webhook triggered</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Webhook Service</td>
+<td>Client Webhook</td>
+<td>POST /webhook {status: delivered}</td>
+<td>Service sends delivery notification</td>
+<td>Webhook delivered</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Client Webhook</td>
+<td>Webhook Service</td>
+<td>return 200 OK</td>
+<td>Client confirms webhook receipt</td>
+<td>Confirmation received</td>
+</tr>
+<tr>
+<td>22</td>
+<td>External API Client</td>
+<td>API Gateway</td>
+<td>GET /campaigns/{id}</td>
+<td>Client requests campaign status</td>
+<td>Status request sent</td>
+</tr>
+<tr>
+<td>23</td>
+<td>API Gateway</td>
+<td>Email API</td>
+<td>getCampaignStatus()</td>
+<td>Gateway routes status request</td>
+<td>Request routed</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Email API</td>
+<td>DynamoDB</td>
+<td>queryStatus()</td>
+<td>API queries campaign status</td>
+<td>Status query executed</td>
+</tr>
+<tr>
+<td>25</td>
+<td>DynamoDB</td>
+<td>Email API</td>
+<td>return statistics</td>
+<td>Database returns campaign statistics</td>
+<td>Statistics received</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Email API</td>
+<td>API Gateway</td>
+<td>return status</td>
+<td>API returns status information</td>
+<td>Status data returned</td>
+</tr>
+<tr>
+<td>27</td>
+<td>API Gateway</td>
+<td>External API Client</td>
+<td>return 200 OK</td>
+<td>Gateway returns status response</td>
+<td>Status delivered</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Integration Phases</h2>
+<br/>
+<h3>Phase 1: Authentication &amp; Request Validation (Steps 1-4)</h3>
+<ul>
+<li><strong>Purpose</strong>: Secure API access and request routing</li>
+<li><strong>Authentication Methods</strong>: </li>
+<ul>
+<li>x-api-key (required)</li>
+<li>OAuth2 Bearer token (optional)</li>
+<li>mTLS client certificate (optional)</li>
+</ul>
+<li><strong>Validation</strong>: API key validity, rate limiting, request format</li>
+<li><strong>Outcome</strong>: Authenticated request routed to Email API</li>
+</ul>
+<br/>
+<h3>Phase 2: Campaign Processing (Steps 5-14)</h3>
+<ul>
+<li><strong>Purpose</strong>: Process and validate campaign data</li>
+<li><strong>Components</strong>: Email API, Template Service, Recipient Service</li>
+<li><strong>Operations</strong>: </li>
+<ul>
+<li>Template validation and processing</li>
+<li>Recipient list validation and deduplication</li>
+<li>Campaign data storage with tenant isolation</li>
+</ul>
+<li><strong>Outcome</strong>: Campaign created and queued for processing</li>
+</ul>
+<br/>
+<h3>Phase 3: Asynchronous Email Processing (Steps 15-18)</h3>
+<ul>
+<li><strong>Purpose</strong>: Process and deliver emails asynchronously</li>
+<li><strong>Components</strong>: Email Queue, Email Processor, Amazon SES</li>
+<li><strong>Operations</strong>:</li>
+<ul>
+<li>Batch processing of email jobs</li>
+<li>Template rendering with personalization</li>
+<li>Email delivery through SES</li>
+</ul>
+<li><strong>Outcome</strong>: Emails delivered with status tracking</li>
+</ul>
+<br/>
+<h3>Phase 4: Webhook Notifications (Steps 19-21)</h3>
+<ul>
+<li><strong>Purpose</strong>: Notify client of delivery events</li>
+<li><strong>Components</strong>: Webhook Service, Client Webhook Endpoint</li>
+<li><strong>Events</strong>: Delivery, bounce, complaint, open, click</li>
+<li><strong>Security</strong>: HMAC signature validation</li>
+<li><strong>Outcome</strong>: Client receives real-time event notifications</li>
+</ul>
+<br/>
+<h3>Phase 5: Status Queries (Steps 22-27)</h3>
+<ul>
+<li><strong>Purpose</strong>: Allow clients to query campaign status</li>
+<li><strong>Components</strong>: Email API, DynamoDB</li>
+<li><strong>Data</strong>: Campaign statistics, delivery metrics, error information</li>
+<li><strong>Outcome</strong>: Client receives current campaign status</li>
+</ul>
+<br/>
+<h2>API Request Examples</h2>
+<br/>
+<h3>Campaign Creation Request</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/campaigns
+Headers:
+  x-api-key: sk_live_1234567890abcdef
+  Content-Type: application/json
+
+{
+  "name": "Product Launch Campaign",
+  "subject": "Introducing Our New Product",
+  "fromEmail": "marketing@company.com",
+  "fromName": "Marketing Team",
+  "template": {
+    "html": "<h1>Hello {{firstName}}</h1><p>Check out our new product!</p>",
+    "text": "Hello {{firstName}}, Check out our new product!"
+  },
+  "recipients": [
+    {
+      "email": "customer@example.com",
+      "firstName": "John",
+      "lastName": "Doe"
+    }
+  ],
+  "settings": {
+    "trackOpens": true,
+    "trackClicks": true,
+    "throttle": {
+      "emailsPerHour": 1000
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Campaign Creation Response</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+HTTP/1.1 201 Created
+{
+  "id": "camp_1234567890abcdef",
+  "name": "Product Launch Campaign",
+  "status": "queued",
+  "created": "2024-01-15T10:30:00Z",
+  "recipientCount": 1,
+  "estimatedSendTime": "2024-01-15T10:35:00Z"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Status Query Response</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+HTTP/1.1 200 OK
+{
+  "id": "camp_1234567890abcdef",
+  "name": "Product Launch Campaign",
+  "status": "sent",
+  "created": "2024-01-15T10:30:00Z",
+  "sent": "2024-01-15T10:35:00Z",
+  "statistics": {
+    "sent": 1000,
+    "delivered": 980,
+    "bounced": 15,
+    "complained": 2,
+    "opened": 490,
+    "clicked": 147,
+    "deliveryRate": 98.0,
+    "openRate": 50.0,
+    "clickRate": 15.0
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Webhook Event Example</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /your-webhook-endpoint
+Headers:
+  X-Signature-SHA256: sha256=1234567890abcdef...
+  Content-Type: application/json
+
+{
+  "id": "evt_1234567890abcdef",
+  "type": "email.delivered",
+  "timestamp": "2024-01-15T10:35:00Z",
+  "data": {
+    "campaignId": "camp_1234567890abcdef",
+    "messageId": "msg_1234567890abcdef",
+    "recipientEmail": "customer@example.com",
+    "deliveryTimestamp": "2024-01-15T10:35:00Z"
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Authentication Methods</h2>
+<br/>
+<h3>API Key Authentication</h3>
+<ul>
+<li><strong>Header</strong>: <code>x-api-key: sk<em>live</em>1234567890abcdef</code></li>
+<li><strong>Required</strong>: Yes, for all requests</li>
+<li><strong>Validation</strong>: Key validity, rate limits, permissions</li>
+<li><strong>Scope</strong>: Full API access based on account permissions</li>
+</ul>
+<br/>
+<h3>OAuth2 Authentication (Optional)</h3>
+<ul>
+<li><strong>Header</strong>: <code>Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</code></li>
+<li><strong>Flow</strong>: Client credentials or authorization code</li>
+<li><strong>Scope</strong>: Granular permissions (campaigns.read, campaigns.write)</li>
+<li><strong>Expiration</strong>: Configurable token lifetime</li>
+</ul>
+<br/>
+<h3>Mutual TLS (Optional)</h3>
+<ul>
+<li><strong>Method</strong>: Client certificate authentication</li>
+<li><strong>Use Case</strong>: High-security enterprise integrations</li>
+<li><strong>Validation</strong>: Certificate chain validation</li>
+<li><strong>Benefits</strong>: Non-repudiation, strong authentication</li>
+</ul>
+<br/>
+<h2>Error Handling</h2>
+<br/>
+<h3>Authentication Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Error Code</th>
+<th>HTTP Status</th>
+<th>Description</th>
+<th>Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INVALID_API_KEY</td>
+<td>401</td>
+<td>API key is invalid or expired</td>
+<td>Check API key validity</td>
+</tr>
+<tr>
+<td>RATE_LIMIT_EXCEEDED</td>
+<td>429</td>
+<td>Too many requests</td>
+<td>Implement backoff strategy</td>
+</tr>
+<tr>
+<td>INSUFFICIENT_PERMISSIONS</td>
+<td>403</td>
+<td>API key lacks required permissions</td>
+<td>Check account permissions</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Validation Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Error Code</th>
+<th>HTTP Status</th>
+<th>Description</th>
+<th>Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VALIDATION_ERROR</td>
+<td>400</td>
+<td>Request data validation failed</td>
+<td>Fix request format</td>
+</tr>
+<tr>
+<td>INVALID_EMAIL</td>
+<td>422</td>
+<td>Email addresses are invalid</td>
+<td>Validate email format</td>
+</tr>
+<tr>
+<td>TEMPLATE_ERROR</td>
+<td>422</td>
+<td>Template processing failed</td>
+<td>Check template syntax</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Processing Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Error Code</th>
+<th>HTTP Status</th>
+<th>Description</th>
+<th>Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QUOTA_EXCEEDED</td>
+<td>429</td>
+<td>Account quota exceeded</td>
+<td>Upgrade plan or wait</td>
+</tr>
+<tr>
+<td>SERVICE_UNAVAILABLE</td>
+<td>503</td>
+<td>Temporary service issue</td>
+<td>Retry with backoff</td>
+</tr>
+<tr>
+<td>INTERNAL_ERROR</td>
+<td>500</td>
+<td>Unexpected server error</td>
+<td>Contact support</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Webhook Configuration</h2>
+<br/>
+<h3>Supported Events</h3>
+<ul>
+<li><code>email.sent</code> - Email successfully sent to SES</li>
+<li><code>email.delivered</code> - Email delivered to recipient</li>
+<li><code>email.bounced</code> - Email bounced (hard or soft)</li>
+<li><code>email.complained</code> - Recipient marked as spam</li>
+<li><code>email.opened</code> - Recipient opened email</li>
+<li><code>email.clicked</code> - Recipient clicked link</li>
+<li><code>email.unsubscribed</code> - Recipient unsubscribed</li>
+</ul>
+<br/>
+<h3>Security</h3>
+<ul>
+<li><strong>HMAC Signature</strong>: All webhooks signed with shared secret</li>
+<li><strong>Retry Logic</strong>: Failed webhooks retried with exponential backoff</li>
+<li><strong>Timeout</strong>: 30-second timeout for webhook responses</li>
+<li><strong>Verification</strong>: Signature verification required</li>
+</ul>
+<br/>
+<h3>Configuration</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/webhooks
+{
+  "url": "https://your-app.com/webhooks/email-events",
+  "events": ["email.delivered", "email.bounced", "email.opened"],
+  "secret": "your-webhook-secret-key",
+  "active": true
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Rate Limiting</h2>
+<br/>
+<h3>Default Limits</h3>
+<ul>
+<li><strong>Requests per hour</strong>: 1000</li>
+<li><strong>Requests per minute</strong>: 100</li>
+<li><strong>Burst limit</strong>: 10 requests per second</li>
+<li><strong>Email sending</strong>: Based on account tier</li>
+</ul>
+<br/>
+<h3>Headers</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1642248600
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Handling Rate Limits</h3>
+<ul>
+<li><strong>Exponential Backoff</strong>: Increase delay between retries</li>
+<li><strong>Jitter</strong>: Add randomness to prevent thundering herd</li>
+<li><strong>Circuit Breaker</strong>: Stop requests when consistently failing</li>
+<li><strong>Queue Management</strong>: Queue requests during rate limit periods</li>
+</ul>
+<br/>
+</body>
+</html>

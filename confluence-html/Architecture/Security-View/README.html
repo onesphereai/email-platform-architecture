@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>README</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Security View</h1>
+<br/>
+<h2>Overview</h2>
+<p>The Security View describes the system&#x27;s security architecture, including authentication, authorization, data protection, compliance measures, and security monitoring.</p>
+<br/>
+<h2>Contents</h2>
+<br/>
+<h3>Security Architecture</h3>
+<ul>
+<li><strong><a href="05<em>security</em>architecture.png">Security Architecture</a></strong> - Comprehensive security layers</li>
+<li><strong><a href="19<em>clean</em>security_architecture.png">Clean Security Architecture</a></strong> - Simplified security view</li>
+</ul>
+<br/>
+<h3>Authentication &amp; Authorization</h3>
+<ul>
+<li><strong><a href="14<em>authentication</em>sequence.png">Authentication Sequence</a></strong> - SAML SSO authentication flow</li>
+</ul>
+<br/>
+<h3>Flow Descriptions</h3>
+<ul>
+<li><strong><a href="19<em>clean</em>security<em>architecture</em>flow.md">Security Architecture Flow</a></strong> - Multi-layer security analysis</li>
+<li><strong><a href="14<em>authentication</em>sequence_flow.md">Authentication Flow</a></strong> - 31-step SAML authentication process</li>
+</ul>
+<br/>
+<h2>Security Architecture Layers</h2>
+<br/>
+<h3>Edge Security</h3>
+<ul>
+<li><strong>AWS WAF</strong>: Web application firewall protection</li>
+<li><strong>AWS Shield</strong>: DDoS protection and mitigation</li>
+<li><strong>CloudFront</strong>: SSL/TLS termination and geo-blocking</li>
+<li><strong>Rate Limiting</strong>: Request throttling and abuse prevention</li>
+</ul>
+<br/>
+<h3>API Security</h3>
+<ul>
+<li><strong>API Gateway</strong>: Request validation and authentication</li>
+<li><strong>Input Validation</strong>: Schema validation and sanitization</li>
+<li><strong>CORS</strong>: Cross-origin resource sharing controls</li>
+<li><strong>API Keys</strong>: API access control and management</li>
+</ul>
+<br/>
+<h3>Authentication &amp; Authorization</h3>
+<ul>
+<li><strong>AWS Cognito</strong>: User pool and identity management</li>
+<li><strong>SAML Integration</strong>: Enterprise identity provider integration</li>
+<li><strong>JWT Tokens</strong>: Stateless authentication tokens</li>
+<li><strong>Multi-Factor Authentication</strong>: Enhanced security measures</li>
+<li><strong>Role-Based Access Control</strong>: Granular permission management</li>
+</ul>
+<br/>
+<h3>Data Protection</h3>
+<ul>
+<li><strong>Encryption at Rest</strong>: AWS KMS encryption for all data</li>
+<li><strong>Encryption in Transit</strong>: TLS 1.2+ for all communications</li>
+<li><strong>Key Management</strong>: Centralized key management with AWS KMS</li>
+<li><strong>Data Classification</strong>: Sensitive data identification and protection</li>
+</ul>
+<br/>
+<h3>Email Security</h3>
+<ul>
+<li><strong>SPF Records</strong>: Sender Policy Framework validation</li>
+<li><strong>DKIM Signing</strong>: DomainKeys Identified Mail authentication</li>
+<li><strong>DMARC Policy</strong>: Domain-based Message Authentication</li>
+<li><strong>Reputation Monitoring</strong>: Sender reputation tracking</li>
+</ul>
+<br/>
+<h3>Network Security</h3>
+<ul>
+<li><strong>VPC</strong>: Virtual private cloud isolation</li>
+<li><strong>Security Groups</strong>: Instance-level firewall rules</li>
+<li><strong>NACLs</strong>: Network-level access control lists</li>
+<li><strong>Private Subnets</strong>: Internal service isolation</li>
+</ul>
+<br/>
+<h2>Security Controls</h2>
+<br/>
+<h3>Authentication Methods</h3>
+<ol>
+<li><strong>SAML 2.0</strong>: Enterprise single sign-on</li>
+<li><strong>JWT Tokens</strong>: Stateless authentication</li>
+<li><strong>API Keys</strong>: Programmatic access control</li>
+<li><strong>OAuth 2.0</strong>: Third-party integration security</li>
+<li><strong>mTLS</strong>: Mutual TLS for high-security scenarios</li>
+</ol>
+<br/>
+<h3>Authorization Framework</h3>
+<ul>
+<li><strong>Principle of Least Privilege</strong>: Minimal required access</li>
+<li><strong>Role-Based Access Control</strong>: Permission grouping</li>
+<li><strong>Resource-Based Permissions</strong>: Fine-grained access control</li>
+<li><strong>Tenant Isolation</strong>: Multi-tenant security boundaries</li>
+</ul>
+<br/>
+<h3>Data Security Measures</h3>
+<ul>
+<li><strong>Data Encryption</strong>: AES-256 encryption for all data</li>
+<li><strong>Key Rotation</strong>: Regular encryption key rotation</li>
+<li><strong>Data Masking</strong>: PII protection in logs and analytics</li>
+<li><strong>Secure Deletion</strong>: Cryptographic data deletion</li>
+</ul>
+<br/>
+<h2>Compliance &amp; Governance</h2>
+<br/>
+<h3>Regulatory Compliance</h3>
+<ul>
+<li><strong>GDPR</strong>: European data protection regulation</li>
+<li><strong>CCPA</strong>: California Consumer Privacy Act</li>
+<li><strong>SOC 2</strong>: Security and availability controls</li>
+<li><strong>ISO 27001</strong>: Information security management</li>
+<li><strong>CAN-SPAM</strong>: Email marketing compliance</li>
+<li><strong>Australian Spam Act</strong>: Local anti-spam requirements</li>
+</ul>
+<br/>
+<h3>Security Policies</h3>
+<ul>
+<li><strong>Password Policy</strong>: Strong password requirements</li>
+<li><strong>Access Policy</strong>: Regular access reviews</li>
+<li><strong>Data Classification</strong>: Data handling procedures</li>
+<li><strong>Incident Response</strong>: Security incident procedures</li>
+</ul>
+<br/>
+<h3>Audit &amp; Monitoring</h3>
+<ul>
+<li><strong>CloudTrail</strong>: API audit logging</li>
+<li><strong>GuardDuty</strong>: Threat detection and analysis</li>
+<li><strong>Security Hub</strong>: Centralized security dashboard</li>
+<li><strong>Config</strong>: Compliance monitoring and reporting</li>
+</ul>
+<br/>
+<h2>Security Monitoring</h2>
+<br/>
+<h3>Threat Detection</h3>
+<ul>
+<li><strong>Real-time Monitoring</strong>: Continuous security monitoring</li>
+<li><strong>Anomaly Detection</strong>: Behavioral analysis and alerting</li>
+<li><strong>Vulnerability Scanning</strong>: Regular security assessments</li>
+<li><strong>Penetration Testing</strong>: Periodic security testing</li>
+</ul>
+<br/>
+<h3>Incident Response</h3>
+<ul>
+<li><strong>Incident Classification</strong>: Severity-based response</li>
+<li><strong>Response Procedures</strong>: Documented response workflows</li>
+<li><strong>Escalation Policies</strong>: Alert escalation procedures</li>
+<li><strong>Recovery Procedures</strong>: Security incident recovery</li>
+</ul>
+<br/>
+<h3>Security Metrics</h3>
+<ul>
+<li><strong>Mean Time to Detection (MTTD)</strong>: Threat detection speed</li>
+<li><strong>Mean Time to Response (MTTR)</strong>: Incident response time</li>
+<li><strong>False Positive Rate</strong>: Alert accuracy measurement</li>
+<li><strong>Security Coverage</strong>: Monitoring coverage assessment</li>
+</ul>
+<br/>
+<h2>Security Best Practices</h2>
+<br/>
+<h3>Defense in Depth</h3>
+<ul>
+<li><strong>Multiple Security Layers</strong>: Overlapping security controls</li>
+<li><strong>Fail-Safe Defaults</strong>: Secure by default configuration</li>
+<li><strong>Zero Trust Architecture</strong>: Never trust, always verify</li>
+<li><strong>Continuous Monitoring</strong>: Real-time security assessment</li>
+</ul>
+<br/>
+<h3>Secure Development</h3>
+<ul>
+<li><strong>Security Code Review</strong>: Secure coding practices</li>
+<li><strong>Dependency Scanning</strong>: Third-party vulnerability assessment</li>
+<li><strong>Static Analysis</strong>: Code security analysis</li>
+<li><strong>Dynamic Testing</strong>: Runtime security testing</li>
+</ul>
+<br/>
+<h3>Operational Security</h3>
+<ul>
+<li><strong>Security Training</strong>: Regular security awareness training</li>
+<li><strong>Access Management</strong>: Centralized access control</li>
+<li><strong>Patch Management</strong>: Regular security updates</li>
+<li><strong>Backup Security</strong>: Secure backup and recovery procedures</li>
+</ul>
+<br/>
+</body>
+</html>
