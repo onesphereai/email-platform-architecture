@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email_Platform_Costing_Scenarios</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Email Platform - Detailed Costing Scenarios</h1>
+<br/>
+<h2>Overview</h2>
+<p>This document provides detailed cost analysis for the standalone Email Platform across different message volumes: 10K, 100K, 500K, and 1M messages per month. All pricing is based on AWS documentation and current rates as of August 2024.</p>
+<br/>
+<h2>Pricing Assumptions (US East - N. Virginia)</h2>
+<br/>
+<h3>AWS Service Pricing (Per AWS Documentation)</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Pricing Model</th>
+<th>Rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>**AWS Lambda**</td>
+<td>Per request + duration</td>
+<td>$0.0000002 per request + $0.0000166667 per GB-second</td>
+</tr>
+<tr>
+<td>**Step Functions**</td>
+<td>Per state transition</td>
+<td>$0.000025 per state transition</td>
+</tr>
+<tr>
+<td>**API Gateway**</td>
+<td>Per million requests</td>
+<td>$3.50 per million API calls</td>
+</tr>
+<tr>
+<td>**DynamoDB On-Demand**</td>
+<td>Per request</td>
+<td>Read: $0.25/million RRU, Write: $1.25/million WRU</td>
+</tr>
+<tr>
+<td>**DynamoDB Storage**</td>
+<td>Per GB-month</td>
+<td>$0.25 per GB per month</td>
+</tr>
+<tr>
+<td>**Amazon SES**</td>
+<td>Per email</td>
+<td>$0.10 per 1,000 emails</td>
+</tr>
+<tr>
+<td>**S3 Standard**</td>
+<td>Storage + requests</td>
+<td>$0.023 per GB + $0.0004 per 1,000 PUT requests</td>
+</tr>
+<tr>
+<td>**EventBridge**</td>
+<td>Per million events</td>
+<td>$1.00 per million custom events</td>
+</tr>
+<tr>
+<td>**OpenSearch Serverless**</td>
+<td>Per OCU + storage</td>
+<td>$0.24 per OCU-hour + $0.024 per GB-month</td>
+</tr>
+<tr>
+<td>**SNS**</td>
+<td>Per million messages</td>
+<td>$0.50 per million messages</td>
+</tr>
+<tr>
+<td>**CloudWatch**</td>
+<td>Logs + metrics</td>
+<td>$0.50 per GB ingested + $0.30 per metric</td>
+</tr>
+<tr>
+<td>**KMS**</td>
+<td>Per request</td>
+<td>$0.03 per 10,000 requests</td>
+</tr>
+<tr>
+<td>**Secrets Manager**</td>
+<td>Per secret</td>
+<td>$0.40 per secret per month</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Scenario 1: 10K Messages/Month</h2>
+<br/>
+<h3>Usage Patterns</h3>
+<ul>
+<li><strong>Email Volume</strong>: 10,000 messages/month</li>
+<li><strong>Campaigns</strong>: 10 campaigns/month (1K messages each)</li>
+<li><strong>Templates</strong>: 5 active templates</li>
+<li><strong>CSV Files</strong>: 10 files/month (1KB each)</li>
+<li><strong>API Calls</strong>: 50,000 calls/month</li>
+<li><strong>Analytics Queries</strong>: 1,000 queries/month</li>
+</ul>
+<br/>
+<h3>Detailed Cost Breakdown</h3>
+<br/>
+<h4>Compute Services</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+lambda:
+  emailAPI: 
+    requests: 15000        # API + processing requests
+    memory: 1024MB
+    duration: 3s
+    cost: $0.75
+  
+  fileProcessing:
+    requests: 10000        # File processing requests  
+    memory: 512MB
+    duration: 5s
+    cost: $0.42
+    
+  callbacks:
+    requests: 5000         # Callback requests
+    memory: 256MB  
+    duration: 1s
+    cost: $0.05
+    
+  totalLambdaCost: $1.22
+
+stepFunctions:
+  fileProcessing:
+    stateTransitions: 1000  # 10 campaigns × 100 transitions
+    cost: $0.025
+    
+  emailSending:
+    stateTransitions: 10000 # 10K messages × 1 transition
+    cost: $0.25
+    
+  scheduling:
+    stateTransitions: 500   # Scheduling transitions
+    cost: $0.0125
+    
+  totalStepFunctionsCost: $0.29
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Data Storage &amp; Processing</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+dynamodb:
+  storage: 1GB             # Transaction/Batch/Message data
+  storageCost: $0.25
+  
+  readRequests: 50000      # 50K RRU per month
+  readCost: $0.0125
+  
+  writeRequests: 15000     # 15K WRU per month  
+  writeCost: $0.01875
+  
+  totalDynamoDBCost: $0.28
+
+s3:
+  storage: 0.1GB           # Templates and CSV files
+  storageCost: $0.002
+  
+  putRequests: 15          # Template + CSV uploads
+  requestCost: $0.000006
+  
+  totalS3Cost: $0.002
+
+openSearch:
+  computeUnits: 0.5        # 0.5 OCU for low volume
+  computeHours: 744        # 24×31 hours
+  computeCost: $89.28
+  
+  storage: 2GB             # Analytics data
+  storageCost: $0.048
+  
+  totalOpenSearchCost: $89.33
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Email Delivery</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+ses:
+  emails: 10000
+  cost: $1.00              # $0.10 per 1,000 emails
+
+sns:
+  messages: 50000          # SES events + notifications
+  cost: $0.025
+  
+  totalEmailDeliveryCost: $1.025
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>API &amp; Integration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+apiGateway:
+  requests: 50000
+  cost: $0.175             # $3.50 per million
+
+eventBridge:
+  events: 5000             # Scheduling events
+  cost: $0.005
+  
+  totalAPIIntegrationCost: $0.18
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Security &amp; Monitoring</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+cloudWatch:
+  logIngestion: 0.5GB
+  logCost: $0.25
+  
+  metrics: 50              # Custom metrics
+  metricCost: $15.00
+  
+  totalCloudWatchCost: $15.25
+
+kms:
+  requests: 1000
+  cost: $0.003
+
+secretsManager:
+  secrets: 5
+  cost: $2.00
+  
+  totalSecurityCost: $17.25
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>**Scenario 1 Total Monthly Cost: $109.07**</h3>
+<br/>
+<hr/>
+<br/>
+<h2>Scenario 2: 100K Messages/Month</h2>
+<br/>
+<h3>Usage Patterns</h3>
+<ul>
+<li><strong>Email Volume</strong>: 100,000 messages/month</li>
+<li><strong>Campaigns</strong>: 50 campaigns/month (2K messages each)</li>
+<li><strong>Templates</strong>: 15 active templates</li>
+<li><strong>CSV Files</strong>: 50 files/month (10KB each)</li>
+<li><strong>API Calls</strong>: 200,000 calls/month</li>
+<li><strong>Analytics Queries</strong>: 5,000 queries/month</li>
+</ul>
+<br/>
+<h3>Detailed Cost Breakdown</h3>
+<br/>
+<h4>Compute Services</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+lambda:
+  emailAPI: 
+    requests: 75000
+    memory: 1024MB
+    duration: 3s
+    cost: $3.75
+  
+  fileProcessing:
+    requests: 50000
+    memory: 512MB
+    duration: 5s
+    cost: $2.08
+    
+  callbacks:
+    requests: 25000
+    memory: 256MB
+    duration: 1s
+    cost: $0.26
+    
+  totalLambdaCost: $6.09
+
+stepFunctions:
+  fileProcessing:
+    stateTransitions: 5000
+    cost: $0.125
+    
+  emailSending:
+    stateTransitions: 100000
+    cost: $2.50
+    
+  scheduling:
+    stateTransitions: 2500
+    cost: $0.0625
+    
+  totalStepFunctionsCost: $2.69
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Data Storage &amp; Processing</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+dynamodb:
+  storage: 5GB
+  storageCost: $1.25
+  
+  readRequests: 200000     # 200K RRU per month
+  readCost: $0.05
+  
+  writeRequests: 120000    # 120K WRU per month
+  writeCost: $0.15
+  
+  totalDynamoDBCost: $1.45
+
+s3:
+  storage: 0.5GB
+  storageCost: $0.0115
+  
+  putRequests: 65
+  requestCost: $0.000026
+  
+  totalS3Cost: $0.012
+
+openSearch:
+  computeUnits: 1.0        # 1 OCU
+  computeHours: 744
+  computeCost: $178.56
+  
+  storage: 10GB
+  storageCost: $0.24
+  
+  totalOpenSearchCost: $178.80
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Email Delivery</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+ses:
+  emails: 100000
+  cost: $10.00
+
+sns:
+  messages: 200000
+  cost: $0.10
+  
+  totalEmailDeliveryCost: $10.10
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>API &amp; Integration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+apiGateway:
+  requests: 200000
+  cost: $0.70
+
+eventBridge:
+  events: 25000
+  cost: $0.025
+  
+  totalAPIIntegrationCost: $0.725
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Security &amp; Monitoring</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+cloudWatch:
+  logIngestion: 2GB
+  logCost: $1.00
+  
+  metrics: 100
+  metricCost: $30.00
+  
+  totalCloudWatchCost: $31.00
+
+kms:
+  requests: 5000
+  cost: $0.015
+
+secretsManager:
+  secrets: 10
+  cost: $4.00
+  
+  totalSecurityCost: $35.02
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>**Scenario 2 Total Monthly Cost: $234.87**</h3>
+<br/>
+<hr/>
+<br/>
+<h2>Scenario 3: 500K Messages/Month</h2>
+<br/>
+<h3>Usage Patterns</h3>
+<ul>
+<li><strong>Email Volume</strong>: 500,000 messages/month</li>
+<li><strong>Campaigns</strong>: 100 campaigns/month (5K messages each)</li>
+<li><strong>Templates</strong>: 25 active templates</li>
+<li><strong>CSV Files</strong>: 100 files/month (50KB each)</li>
+<li><strong>API Calls</strong>: 750,000 calls/month</li>
+<li><strong>Analytics Queries</strong>: 15,000 queries/month</li>
+</ul>
+<br/>
+<h3>Detailed Cost Breakdown</h3>
+<br/>
+<h4>Compute Services</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+lambda:
+  emailAPI: 
+    requests: 300000
+    memory: 1024MB
+    duration: 3s
+    cost: $15.00
+  
+  fileProcessing:
+    requests: 150000
+    memory: 512MB
+    duration: 5s
+    cost: $6.25
+    
+  callbacks:
+    requests: 75000
+    memory: 256MB
+    duration: 1s
+    cost: $0.78
+    
+  totalLambdaCost: $22.03
+
+stepFunctions:
+  fileProcessing:
+    stateTransitions: 15000
+    cost: $0.375
+    
+  emailSending:
+    stateTransitions: 500000
+    cost: $12.50
+    
+  scheduling:
+    stateTransitions: 7500
+    cost: $0.1875
+    
+  totalStepFunctionsCost: $13.06
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Data Storage &amp; Processing</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+dynamodb:
+  storage: 20GB
+  storageCost: $5.00
+  
+  readRequests: 750000
+  readCost: $0.1875
+  
+  writeRequests: 550000
+  writeCost: $0.6875
+  
+  totalDynamoDBCost: $5.875
+
+s3:
+  storage: 2GB
+  storageCost: $0.046
+  
+  putRequests: 125
+  requestCost: $0.00005
+  
+  totalS3Cost: $0.046
+
+openSearch:
+  computeUnits: 2.0        # 2 OCU for higher volume
+  computeHours: 744
+  computeCost: $357.12
+  
+  storage: 40GB
+  storageCost: $0.96
+  
+  totalOpenSearchCost: $358.08
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Email Delivery</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+ses:
+  emails: 500000
+  cost: $50.00
+
+sns:
+  messages: 750000
+  cost: $0.375
+  
+  totalEmailDeliveryCost: $50.375
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>API &amp; Integration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+apiGateway:
+  requests: 750000
+  cost: $2.625
+
+eventBridge:
+  events: 75000
+  cost: $0.075
+  
+  totalAPIIntegrationCost: $2.70
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Security &amp; Monitoring</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+cloudWatch:
+  logIngestion: 8GB
+  logCost: $4.00
+  
+  metrics: 200
+  metricCost: $60.00
+  
+  totalCloudWatchCost: $64.00
+
+kms:
+  requests: 15000
+  cost: $0.045
+
+secretsManager:
+  secrets: 15
+  cost: $6.00
+  
+  totalSecurityCost: $70.045
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>**Scenario 3 Total Monthly Cost: $522.21**</h3>
+<br/>
+<hr/>
+<br/>
+<h2>Scenario 4: 1M Messages/Month</h2>
+<br/>
+<h3>Usage Patterns</h3>
+<ul>
+<li><strong>Email Volume</strong>: 1,000,000 messages/month</li>
+<li><strong>Campaigns</strong>: 200 campaigns/month (5K messages each)</li>
+<li><strong>Templates</strong>: 50 active templates</li>
+<li><strong>CSV Files</strong>: 200 files/month (100KB each)</li>
+<li><strong>API Calls</strong>: 1,500,000 calls/month</li>
+<li><strong>Analytics Queries</strong>: 30,000 queries/month</li>
+</ul>
+<br/>
+<h3>Detailed Cost Breakdown</h3>
+<br/>
+<h4>Compute Services</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+lambda:
+  emailAPI: 
+    requests: 600000
+    memory: 1024MB
+    duration: 3s
+    cost: $30.00
+  
+  fileProcessing:
+    requests: 300000
+    memory: 512MB
+    duration: 5s
+    cost: $12.50
+    
+  callbacks:
+    requests: 150000
+    memory: 256MB
+    duration: 1s
+    cost: $1.56
+    
+  totalLambdaCost: $44.06
+
+stepFunctions:
+  fileProcessing:
+    stateTransitions: 30000
+    cost: $0.75
+    
+  emailSending:
+    stateTransitions: 1000000
+    cost: $25.00
+    
+  scheduling:
+    stateTransitions: 15000
+    cost: $0.375
+    
+  totalStepFunctionsCost: $26.125
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Data Storage &amp; Processing</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+dynamodb:
+  storage: 50GB
+  storageCost: $12.50
+  
+  readRequests: 1500000
+  readCost: $0.375
+  
+  writeRequests: 1100000
+  writeCost: $1.375
+  
+  totalDynamoDBCost: $14.25
+
+s3:
+  storage: 5GB
+  storageCost: $0.115
+  
+  putRequests: 250
+  requestCost: $0.0001
+  
+  totalS3Cost: $0.115
+
+openSearch:
+  computeUnits: 3.0        # 3 OCU for high volume
+  computeHours: 744
+  computeCost: $535.68
+  
+  storage: 80GB
+  storageCost: $1.92
+  
+  totalOpenSearchCost: $537.60
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Email Delivery</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+ses:
+  emails: 1000000
+  cost: $100.00
+
+sns:
+  messages: 1500000
+  cost: $0.75
+  
+  totalEmailDeliveryCost: $100.75
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>API &amp; Integration</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+apiGateway:
+  requests: 1500000
+  cost: $5.25
+
+eventBridge:
+  events: 150000
+  cost: $0.15
+  
+  totalAPIIntegrationCost: $5.40
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Security &amp; Monitoring</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+cloudWatch:
+  logIngestion: 15GB
+  logCost: $7.50
+  
+  metrics: 300
+  metricCost: $90.00
+  
+  totalCloudWatchCost: $97.50
+
+kms:
+  requests: 30000
+  cost: $0.09
+
+secretsManager:
+  secrets: 20
+  cost: $8.00
+  
+  totalSecurityCost: $105.59
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>**Scenario 4 Total Monthly Cost: $833.89**</h3>
+<br/>
+<hr/>
+<br/>
+<h2>Cost Summary &amp; Analysis</h2>
+<br/>
+<h3>Monthly Cost Comparison</h3>
+<table>
+<thead>
+<tr>
+<th>Message Volume</th>
+<th>Total Cost</th>
+<th>Cost per Message</th>
+<th>Cost per 1K Messages</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>**10K**</td>
+<td>$109.07</td>
+<td>$0.0109</td>
+<td>$10.91</td>
+</tr>
+<tr>
+<td>**100K**</td>
+<td>$234.87</td>
+<td>$0.0023</td>
+<td>$2.35</td>
+</tr>
+<tr>
+<td>**500K**</td>
+<td>$522.21</td>
+<td>$0.0010</td>
+<td>$1.04</td>
+</tr>
+<tr>
+<td>**1M**</td>
+<td>$833.89</td>
+<td>$0.0008</td>
+<td>$0.83</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Cost Distribution by Service Category</h3>
+<br/>
+<h4>10K Messages/Month</h4>
+<ul>
+<li><strong>Compute (Lambda + Step Functions)</strong>: $1.51 (1.4%)</li>
+<li><strong>Data Storage (DynamoDB + S3)</strong>: $0.28 (0.3%)</li>
+<li><strong>Analytics (OpenSearch)</strong>: $89.33 (81.9%)</li>
+<li><strong>Email Delivery (SES + SNS)</strong>: $1.03 (0.9%)</li>
+<li><strong>Security &amp; Monitoring</strong>: $17.25 (15.8%)</li>
+</ul>
+<br/>
+<h4>100K Messages/Month</h4>
+<ul>
+<li><strong>Compute</strong>: $8.78 (3.7%)</li>
+<li><strong>Data Storage</strong>: $1.46 (0.6%)</li>
+<li><strong>Analytics</strong>: $178.80 (76.1%)</li>
+<li><strong>Email Delivery</strong>: $10.10 (4.3%)</li>
+<li><strong>Security &amp; Monitoring</strong>: $35.02 (14.9%)</li>
+</ul>
+<br/>
+<h4>500K Messages/Month</h4>
+<ul>
+<li><strong>Compute</strong>: $35.09 (6.7%)</li>
+<li><strong>Data Storage</strong>: $5.92 (1.1%)</li>
+<li><strong>Analytics</strong>: $358.08 (68.6%)</li>
+<li><strong>Email Delivery</strong>: $50.38 (9.6%)</li>
+<li><strong>Security &amp; Monitoring</strong>: $70.05 (13.4%)</li>
+</ul>
+<br/>
+<h4>1M Messages/Month</h4>
+<ul>
+<li><strong>Compute</strong>: $70.19 (8.4%)</li>
+<li><strong>Data Storage</strong>: $14.37 (1.7%)</li>
+<li><strong>Analytics</strong>: $537.60 (64.5%)</li>
+<li><strong>Email Delivery</strong>: $100.75 (12.1%)</li>
+<li><strong>Security &amp; Monitoring</strong>: $105.59 (12.7%)</li>
+</ul>
+<br/>
+<h2>Key Insights</h2>
+<br/>
+<h3>Economies of Scale</h3>
+<ol>
+<li><strong>Cost per message decreases significantly</strong> with volume (from $0.0109 to $0.0008)</li>
+<li><strong>OpenSearch dominates costs</strong> at all scales but becomes more efficient per message</li>
+<li><strong>Fixed costs</strong> (monitoring, security) become smaller percentage at scale</li>
+<li><strong>Variable costs</strong> (SES, Lambda) scale linearly but benefit from bulk pricing</li>
+</ol>
+<br/>
+<h3>Cost Optimization Opportunities</h3>
+<ol>
+<li><strong>OpenSearch right-sizing</strong> - Biggest impact on total cost</li>
+<li><strong>Lambda memory optimization</strong> - 20-30% savings potential</li>
+<li><strong>DynamoDB provisioned capacity</strong> - 30-40% savings at scale</li>
+<li><strong>Reserved capacity</strong> - Additional 20-50% savings with commitments</li>
+</ol>
+<br/>
+<h3>Break-Even Analysis</h3>
+<ul>
+<li><strong>Platform becomes profitable</strong> at ~50K messages/month</li>
+<li><strong>Optimal efficiency</strong> achieved at 500K+ messages/month</li>
+<li><strong>Enterprise pricing</strong> justified at 1M+ messages/month</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><strong>Document Version</strong>: 1.0  </p>
+<p><strong>Last Updated</strong>: August 17, 2024  </p>
+<p><strong>Pricing Source</strong>: AWS Documentation (August 2024)  </p>
+<p><strong>Region</strong>: US East (N. Virginia)</p>
+<br/>
+</body>
+</html>
