@@ -6,12 +6,12 @@
 </head>
 <body>
 <!-- Confluence Storage Format -->
-<h1>Email Platform - Cost Analysis &amp; Optimization</h1>
+<h1>Email Platform - Standalone Architecture Cost Analysis</h1>
 <br/>
 <h2>Overview</h2>
-<p>This document provides a comprehensive cost analysis for the Email Platform, including cost breakdown by service, optimization strategies, and cost projection models.</p>
+<p>This document provides a comprehensive cost analysis for the standalone Email Platform architecture, including cost breakdown by service, optimization strategies, and cost projection models based on the new architectural decisions.</p>
 <br/>
-<h2>Cost Structure Analysis</h2>
+<h2>Standalone Architecture Cost Structure</h2>
 <br/>
 <h3>AWS Service Costs (Monthly Estimates)</h3>
 <br/>
@@ -22,530 +22,893 @@
 <th>Usage Pattern</th>
 <th>Estimated Cost</th>
 <th>Cost Driver</th>
+<th>Architecture Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>**AWS Lambda**</td>
-<td>10M requests/month, 512MB, 3s avg</td>
-<td>$50-100</td>
-<td>Request volume, memory allocation</td>
+<td>15M requests/month, 1GB, 5s avg</td>
+<td>$120-200</td>
+<td>Request volume, processing time</td>
+<td>Email API, File Processing, Callbacks</td>
+</tr>
+<tr>
+<td>**Step Functions**</td>
+<td>2M state transitions/month</td>
+<td>$50-80</td>
+<td>State transitions, execution time</td>
+<td>File splitting, Email sending pipeline</td>
 </tr>
 <tr>
 <td>**API Gateway**</td>
-<td>10M API calls/month</td>
-<td>$35-50</td>
+<td>5M API calls/month</td>
+<td>$20-35</td>
 <td>API request volume</td>
+<td>Email Platform APIs only</td>
 </tr>
 <tr>
 <td>**DynamoDB**</td>
-<td>100GB storage, 1000 RCU/WCU</td>
-<td>$150-300</td>
-<td>Storage + throughput capacity</td>
+<td>200GB storage, 2000 RCU/WCU</td>
+<td>$300-500</td>
+<td>Storage + throughput</td>
+<td>Transaction/Batch/Message hierarchy</td>
 </tr>
 <tr>
 <td>**Amazon SES**</td>
-<td>1M emails/month</td>
-<td>$100-200</td>
+<td>2M emails/month</td>
+<td>$200-400</td>
 <td>Email volume, dedicated IPs</td>
+<td>Email delivery service</td>
 </tr>
 <tr>
 <td>**S3 Storage**</td>
-<td>500GB templates/assets</td>
-<td>$15-25</td>
+<td>1TB templates/CSV files</td>
+<td>$25-40</td>
 <td>Storage volume, requests</td>
+<td>Templates, CSV files via presigned URLs</td>
 </tr>
 <tr>
-<td>**CloudFront**</td>
-<td>1TB data transfer</td>
-<td>$85-120</td>
-<td>Data transfer, requests</td>
+<td>**EventBridge**</td>
+<td>1M events/month</td>
+<td>$10-20</td>
+<td>Event volume</td>
+<td>Email scheduling</td>
 </tr>
 <tr>
 <td>**OpenSearch Serverless**</td>
-<td>50GB indexed data</td>
-<td>$200-400</td>
+<td>100GB indexed data</td>
+<td>$400-600</td>
 <td>Data volume, compute units</td>
+<td>Real-time analytics &amp; engagement tracking</td>
 </tr>
 <tr>
-<td>**SQS/SNS**</td>
-<td>50M messages/month</td>
-<td>$25-40</td>
+<td>**SNS**</td>
+<td>10M messages/month</td>
+<td>$20-30</td>
 <td>Message volume</td>
+<td>SES event notifications</td>
 </tr>
 <tr>
 <td>**CloudWatch**</td>
-<td>Logs + metrics</td>
-<td>$50-100</td>
-<td>Log volume, custom metrics</td>
+<td>Logs + metrics + X-Ray</td>
+<td>$80-150</td>
+<td>Log volume, tracing</td>
+<td>Monitoring &amp; observability</td>
 </tr>
 <tr>
-<td>**Cognito**</td>
-<td>10K active users</td>
-<td>$25-50</td>
-<td>Monthly active users</td>
+<td>**KMS**</td>
+<td>10K requests/month</td>
+<td>$5-10</td>
+<td>Key usage</td>
+<td>Data encryption</td>
+</tr>
+<tr>
+<td>**Secrets Manager**</td>
+<td>20 secrets</td>
+<td>$8-15</td>
+<td>Secret storage</td>
+<td>API keys, credentials</td>
 </tr>
 </tbody>
 </table>
 <br/>
-<p><strong>Total Estimated Monthly Cost: $735 - $1,385</strong></p>
+<p><strong>Total Estimated Monthly Cost: $1,238 - $2,080</strong></p>
 <br/>
-<h3>Cost Breakdown by Category</h3>
+<h3>Cost Breakdown by Architecture Component</h3>
 <br/>
-<h4>Compute Costs (35-40%)</h4>
+<h4>Email Platform Core (40-45%)</h4>
 <ul>
-<li><strong>AWS Lambda</strong>: $50-100</li>
-<li><strong>OpenSearch Serverless</strong>: $200-400</li>
-<li><strong>Total</strong>: $250-500</li>
+<li><strong>Lambda Functions</strong>: $120-200</li>
+<li><strong>Step Functions</strong>: $50-80</li>
+<li><strong>API Gateway</strong>: $20-35</li>
+<li><strong>EventBridge</strong>: $10-20</li>
+<li><strong>Total</strong>: $200-335</li>
 </ul>
 <br/>
-<h4>Storage Costs (15-20%)</h4>
+<h4>Data Storage &amp; Processing (35-40%)</h4>
 <ul>
-<li><strong>DynamoDB</strong>: $75-150 (storage portion)</li>
-<li><strong>S3</strong>: $15-25</li>
-<li><strong>Total</strong>: $90-175</li>
+<li><strong>DynamoDB</strong>: $300-500</li>
+<li><strong>OpenSearch Serverless</strong>: $400-600</li>
+<li><strong>S3</strong>: $25-40</li>
+<li><strong>Total</strong>: $725-1,140</li>
 </ul>
 <br/>
-<h4>Network Costs (20-25%)</h4>
+<h4>Email Delivery (15-20%)</h4>
 <ul>
-<li><strong>CloudFront</strong>: $85-120</li>
-<li><strong>API Gateway</strong>: $35-50</li>
-<li><strong>Data Transfer</strong>: $20-30</li>
-<li><strong>Total</strong>: $140-200</li>
+<li><strong>Amazon SES</strong>: $200-400</li>
+<li><strong>SNS</strong>: $20-30</li>
+<li><strong>Total</strong>: $220-430</li>
 </ul>
 <br/>
-<h4>Database Costs (20-25%)</h4>
+<h4>Security &amp; Monitoring (8-12%)</h4>
 <ul>
-<li><strong>DynamoDB</strong>: $75-150 (throughput portion)</li>
-<li><strong>Total</strong>: $75-150</li>
+<li><strong>CloudWatch</strong>: $80-150</li>
+<li><strong>KMS</strong>: $5-10</li>
+<li><strong>Secrets Manager</strong>: $8-15</li>
+<li><strong>Total</strong>: $93-175</li>
 </ul>
 <br/>
-<h4>Communication Costs (10-15%)</h4>
-<ul>
-<li><strong>Amazon SES</strong>: $100-200</li>
-<li><strong>SQS/SNS</strong>: $25-40</li>
-<li><strong>Total</strong>: $125-240</li>
-</ul>
+<h2>Standalone Architecture Benefits</h2>
 <br/>
-<h2>Cost Optimization Strategies</h2>
+<h3>Cost Advantages</h3>
+<ol>
+<li><strong>Independent Scaling</strong>: Email Platform scales independently from Message Centre</li>
+<li><strong>Optimized Resource Usage</strong>: Right-sized for email-specific workloads</li>
+<li><strong>Reduced Complexity</strong>: Simpler cost allocation and monitoring</li>
+<li><strong>Better Cost Predictability</strong>: Clear separation of email-related costs</li>
+</ol>
 <br/>
-<h3>1. Serverless Optimization</h3>
-<ac:structured-macro ac:name="code" ac:schema-version="1">
-  <ac:parameter ac:name="language">yaml</ac:parameter>
-  <ac:plain-text-body><![CDATA[
-# Lambda optimization
-functions:
-  emailProcessor:
-    memorySize: 512  # Right-sized for workload
-    timeout: 30      # Optimized timeout
-    reservedConcurrency: 100  # Prevent runaway costs
-    provisionedConcurrency: 10  # For consistent performance
-]]></ac:plain-text-body>
-</ac:structured-macro>
-<br/>
-<h3>2. DynamoDB Cost Optimization</h3>
-<ac:structured-macro ac:name="code" ac:schema-version="1">
-  <ac:parameter ac:name="language">json</ac:parameter>
-  <ac:plain-text-body><![CDATA[
-{
-  "billingMode": "ON_DEMAND",
-  "globalSecondaryIndexes": [
-    {
-      "indexName": "GSI1",
-      "projectionType": "KEYS_ONLY"  // Minimize storage costs
-    }
-  ],
-  "timeToLiveSpecification": {
-    "enabled": true,
-    "attributeName": "ttl"  // Auto-delete old data
-  }
-}
-]]></ac:plain-text-body>
-</ac:structured-macro>
-<br/>
-<h3>3. S3 Cost Optimization</h3>
-<ac:structured-macro ac:name="code" ac:schema-version="1">
-  <ac:parameter ac:name="language">json</ac:parameter>
-  <ac:plain-text-body><![CDATA[
-{
-  "lifecycleConfiguration": {
-    "rules": [
-      {
-        "id": "TemplateArchiving",
-        "status": "Enabled",
-        "transitions": [
-          {
-            "days": 30,
-            "storageClass": "STANDARD_IA"
-          },
-          {
-            "days": 90,
-            "storageClass": "GLACIER"
-          }
-        ]
-      }
-    ]
-  }
-}
-]]></ac:plain-text-body>
-</ac:structured-macro>
-<br/>
-<h3>4. Reserved Capacity Planning</h3>
+<h3>Cost Comparison: Integrated vs Standalone</h3>
 <table>
 <thead>
 <tr>
-<th>Service</th>
-<th>Reservation Type</th>
+<th>Component</th>
+<th>Integrated Architecture</th>
+<th>Standalone Architecture</th>
 <th>Savings</th>
-<th>Commitment</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>DynamoDB</td>
-<td>Reserved Capacity</td>
-<td>53%</td>
-<td>1 year</td>
+<td>Shared Resources</td>
+<td>$400-600</td>
+<td>$0</td>
+<td>100%</td>
 </tr>
 <tr>
-<td>CloudFront</td>
-<td>Reserved Capacity</td>
-<td>20%</td>
-<td>1 year</td>
+<td>Duplicate Services</td>
+<td>$200-300</td>
+<td>$0</td>
+<td>100%</td>
 </tr>
 <tr>
-<td>Lambda</td>
-<td>Provisioned Concurrency</td>
-<td>15%</td>
-<td>Consistent usage</td>
+<td>Complex Routing</td>
+<td>$100-150</td>
+<td>$20-35</td>
+<td>70-80%</td>
+</tr>
+<tr>
+<td>**Total Savings**</td>
+<td></td>
+<td></td>
+<td>**$520-915/month**</td>
 </tr>
 </tbody>
 </table>
 <br/>
-<h2>Cost Scaling Models</h2>
+<h2>Hierarchical Data Model Cost Impact</h2>
 <br/>
-<h3>Linear Scaling Costs</h3>
-<ul>
-<li><strong>Email Volume</strong>: $0.10 per 1,000 emails</li>
-<li><strong>API Requests</strong>: $3.50 per million requests</li>
-<li><strong>Storage</strong>: $0.25 per GB per month</li>
-<li><strong>Data Transfer</strong>: $0.085 per GB</li>
-</ul>
+<h3>DynamoDB Design Optimization</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "tableDesign": {
+    "transactions": {
+      "partitionKey": "transaction_id",
+      "sortKey": "metadata",
+      "estimatedSize": "50GB",
+      "readCapacity": "500 RCU",
+      "writeCapacity": "200 WCU"
+    },
+    "batches": {
+      "partitionKey": "transaction_id", 
+      "sortKey": "batch_id",
+      "estimatedSize": "75GB",
+      "readCapacity": "800 RCU",
+      "writeCapacity": "400 WCU"
+    },
+    "messages": {
+      "partitionKey": "batch_id",
+      "sortKey": "message_id", 
+      "estimatedSize": "75GB",
+      "readCapacity": "700 RCU",
+      "writeCapacity": "1400 WCU"
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
 <br/>
-<h3>Economies of Scale</h3>
+<h3>Cost per Transaction Hierarchy</h3>
 <table>
 <thead>
 <tr>
-<th>Volume Tier</th>
-<th>Cost per Email</th>
-<th>Monthly Volume</th>
+<th>Level</th>
+<th>Storage Cost/Month</th>
+<th>Throughput Cost/Month</th>
+<th>Total Cost/Month</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transaction</td>
+<td>$12.50</td>
+<td>$35</td>
+<td>$47.50</td>
+</tr>
+<tr>
+<td>Batch</td>
+<td>$18.75</td>
+<td>$60</td>
+<td>$78.75</td>
+</tr>
+<tr>
+<td>Message</td>
+<td>$18.75</td>
+<td>$105</td>
+<td>$123.75</td>
+</tr>
+<tr>
+<td>**Total**</td>
+<td>**$50**</td>
+<td>**$200**</td>
+<td>**$250**</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Step Functions Cost Analysis</h2>
+<br/>
+<h3>File Processing Pipeline</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+fileProcessingCost:
+  stateTransitions: 500000  # per month
+  costPerTransition: 0.000025
+  monthlyCost: 12.50
+
+emailSendingPipeline:
+  stateTransitions: 2000000  # per month
+  costPerTransition: 0.000025
+  monthlyCost: 50.00
+
+schedulingPipeline:
+  stateTransitions: 100000  # per month
+  costPerTransition: 0.000025
+  monthlyCost: 2.50
+
+totalStepFunctionsCost: 65.00  # per month
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Processing Cost per Email Campaign</h3>
+<table>
+<thead>
+<tr>
+<th>Campaign Size</th>
+<th>File Processing</th>
+<th>Email Sending</th>
+<th>Scheduling</th>
 <th>Total Cost</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Tier 1</td>
-<td>$0.15</td>
-<td>0-100K</td>
-<td>$0-15</td>
+<td>1K emails</td>
+<td>$0.025</td>
+<td>$0.025</td>
+<td>$0.0025</td>
+<td>$0.0525</td>
 </tr>
 <tr>
-<td>Tier 2</td>
-<td>$0.12</td>
-<td>100K-1M</td>
-<td>$15-120</td>
+<td>10K emails</td>
+<td>$0.25</td>
+<td>$0.25</td>
+<td>$0.025</td>
+<td>$0.525</td>
 </tr>
 <tr>
-<td>Tier 3</td>
-<td>$0.10</td>
-<td>1M-10M</td>
-<td>$120-1,000</td>
+<td>100K emails</td>
+<td>$2.50</td>
+<td>$2.50</td>
+<td>$0.25</td>
+<td>$5.25</td>
 </tr>
 <tr>
-<td>Tier 4</td>
-<td>$0.08</td>
-<td>10M+</td>
-<td>$1,000+</td>
+<td>1M emails</td>
+<td>$25.00</td>
+<td>$25.00</td>
+<td>$2.50</td>
+<td>$52.50</td>
 </tr>
 </tbody>
 </table>
 <br/>
-<h2>Multi-Tenant Cost Allocation</h2>
+<h2>Presigned URL Strategy Cost Impact</h2>
 <br/>
-<h3>Cost Allocation Model</h3>
+<h3>S3 Cost Optimization</h3>
 <ac:structured-macro ac:name="code" ac:schema-version="1">
-  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:parameter ac:name="language">json</ac:parameter>
   <ac:plain-text-body><![CDATA[
-// Tenant cost allocation
-const calculateTenantCost = (tenantUsage) => {
-  return {
-    compute: tenantUsage.lambdaInvocations * 0.0000002,
-    storage: tenantUsage.storageGB * 0.25,
-    emails: tenantUsage.emailsSent * 0.0001,
-    apiCalls: tenantUsage.apiCalls * 0.0000035,
-    dataTransfer: tenantUsage.dataTransferGB * 0.085
-  };
-};
+{
+  "presignedUrlBenefits": {
+    "reducedLambdaProcessing": {
+      "savings": "$50-80/month",
+      "reason": "Direct S3 upload bypasses Lambda processing"
+    },
+    "reducedDataTransfer": {
+      "savings": "$30-50/month", 
+      "reason": "No data transfer through API Gateway"
+    },
+    "improvedPerformance": {
+      "savings": "$20-30/month",
+      "reason": "Reduced Lambda execution time"
+    }
+  },
+  "totalSavings": "$100-160/month"
+}
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <br/>
-<h3>Tenant Pricing Tiers</h3>
+<h3>File Upload Cost Comparison</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Lambda Cost</th>
+<th>Data Transfer</th>
+<th>S3 Cost</th>
+<th>Total Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct API Upload</td>
+<td>$80-120</td>
+<td>$40-60</td>
+<td>$25-40</td>
+<td>$145-220</td>
+</tr>
+<tr>
+<td>Presigned URL</td>
+<td>$20-30</td>
+<td>$10-15</td>
+<td>$25-40</td>
+<td>$55-85</td>
+</tr>
+<tr>
+<td>**Savings**</td>
+<td>**$60-90**</td>
+<td>**$30-45**</td>
+<td>**$0**</td>
+<td>**$90-135**</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>OpenSearch Serverless Cost Analysis</h2>
+<br/>
+<h3>Analytics Data Volume</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+analyticsData:
+  transactionEvents: 100000  # per month
+  messageEvents: 2000000     # per month
+  engagementEvents: 500000   # per month (opens, clicks)
+  sesEvents: 2000000         # per month (delivery, bounce, complaint)
+  
+  totalEvents: 4600000       # per month
+  avgEventSize: 2KB
+  totalDataVolume: 9.2GB     # per month
+  cumulativeData: 100GB      # retained data
+
+costBreakdown:
+  computeUnits: 2            # OCU (OpenSearch Compute Units)
+  computeCost: 350           # $175 per OCU per month
+  storageCost: 50            # $0.50 per GB per month
+  totalMonthlyCost: 400
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Analytics Cost per Email</h3>
+<table>
+<thead>
+<tr>
+<th>Email Volume</th>
+<th>Monthly Analytics Cost</th>
+<th>Cost per Email</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>100K emails</td>
+<td>$100</td>
+<td>$0.001</td>
+</tr>
+<tr>
+<td>1M emails</td>
+<td>$400</td>
+<td>$0.0004</td>
+</tr>
+<tr>
+<td>10M emails</td>
+<td>$1,200</td>
+<td>$0.00012</td>
+</tr>
+<tr>
+<td>100M emails</td>
+<td>$4,000</td>
+<td>$0.00004</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Security Layer Costs</h2>
+<br/>
+<h3>Multi-Layer Authentication</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+securityCosts:
+  apiGateway:
+    requestValidation: 5      # per million requests
+    rateLimiting: 10          # per million requests
+    
+  secretsManager:
+    apiKeyStorage: 8          # 20 secrets × $0.40
+    rotationLambda: 5         # monthly rotation costs
+    
+  kms:
+    keyUsage: 5               # encryption/decryption operations
+    keyStorage: 1             # per key per month
+    
+  totalSecurityCost: 34       # per month
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Security Cost per Transaction</h3>
+<table>
+<thead>
+<tr>
+<th>Security Level</th>
+<th>Setup Cost</th>
+<th>Monthly Cost</th>
+<th>Cost per 1K Transactions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API Key Only</td>
+<td>$0</td>
+<td>$15</td>
+<td>$0.015</td>
+</tr>
+<tr>
+<td>API Key + OAuth</td>
+<td>$100</td>
+<td>$25</td>
+<td>$0.025</td>
+</tr>
+<tr>
+<td>API Key + OAuth + mTLS</td>
+<td>$500</td>
+<td>$40</td>
+<td>$0.040</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Cost Optimization Strategies</h2>
+<br/>
+<h3>1. Lambda Right-Sizing</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+optimization:
+  currentConfig:
+    memory: 1024MB
+    timeout: 30s
+    cost: $200/month
+    
+  optimizedConfig:
+    memory: 512MB      # Right-sized for workload
+    timeout: 15s       # Reduced timeout
+    cost: $120/month   # 40% savings
+    
+  savings: $80/month
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. DynamoDB On-Demand vs Provisioned</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "costComparison": {
+    "onDemand": {
+      "readCost": "$0.25 per million RRU",
+      "writeCost": "$1.25 per million WRU", 
+      "monthlyCost": "$400-600",
+      "benefits": ["No capacity planning", "Auto-scaling", "Pay per use"]
+    },
+    "provisioned": {
+      "readCost": "$0.13 per RCU per hour",
+      "writeCost": "$0.65 per WCU per hour",
+      "monthlyCost": "$250-400",
+      "benefits": ["Lower cost at scale", "Predictable pricing", "Reserved capacity"]
+    },
+    "recommendation": "Start with On-Demand, migrate to Provisioned at scale"
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>3. S3 Lifecycle Management</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "lifecyclePolicy": {
+    "templates": {
+      "current": "STANDARD",
+      "after30Days": "STANDARD_IA",
+      "after90Days": "GLACIER",
+      "savings": "60-70%"
+    },
+    "csvFiles": {
+      "current": "STANDARD", 
+      "after7Days": "DELETE",
+      "savings": "90%"
+    },
+    "analyticsData": {
+      "current": "STANDARD",
+      "after180Days": "GLACIER_DEEP_ARCHIVE",
+      "savings": "80%"
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>4. Step Functions Optimization</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+optimization:
+  batchProcessing:
+    current: "Process messages individually"
+    optimized: "Process in batches of 100"
+    savings: "80% reduction in state transitions"
+    
+  parallelExecution:
+    current: "Sequential processing"
+    optimized: "Parallel processing with Map state"
+    savings: "60% reduction in execution time"
+    
+  errorHandling:
+    current: "Retry all failures"
+    optimized: "Smart retry with exponential backoff"
+    savings: "40% reduction in unnecessary retries"
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Cost Scaling Models</h2>
+<br/>
+<h3>Linear Scaling Components</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Unit Cost</th>
+<th>Scaling Factor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lambda Executions</td>
+<td>$0.0000002 per request</td>
+<td>Linear with email volume</td>
+</tr>
+<tr>
+<td>Step Functions</td>
+<td>$0.000025 per transition</td>
+<td>Linear with campaigns</td>
+</tr>
+<tr>
+<td>DynamoDB</td>
+<td>$0.25 per million RRU</td>
+<td>Linear with queries</td>
+</tr>
+<tr>
+<td>SES</td>
+<td>$0.10 per 1,000 emails</td>
+<td>Linear with email volume</td>
+</tr>
+<tr>
+<td>S3 Storage</td>
+<td>$0.023 per GB</td>
+<td>Linear with template/file storage</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Economies of Scale</h3>
+<table>
+<thead>
+<tr>
+<th>Monthly Email Volume</th>
+<th>Cost per Email</th>
+<th>Total Monthly Cost</th>
+<th>Margin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-100K</td>
+<td>$0.008</td>
+<td>$0-800</td>
+<td>60%</td>
+</tr>
+<tr>
+<td>100K-1M</td>
+<td>$0.006</td>
+<td>$800-6,000</td>
+<td>70%</td>
+</tr>
+<tr>
+<td>1M-10M</td>
+<td>$0.004</td>
+<td>$6,000-40,000</td>
+<td>75%</td>
+</tr>
+<tr>
+<td>10M+</td>
+<td>$0.003</td>
+<td>$40,000+</td>
+<td>80%</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h2>Revenue Model &amp; ROI</h2>
+<br/>
+<h3>Standalone Platform Pricing</h3>
 <table>
 <thead>
 <tr>
 <th>Tier</th>
 <th>Monthly Emails</th>
-<th>Price per Email</th>
-<th>Base Fee</th>
+<th>Platform Fee</th>
+<th>Per Email Fee</th>
+<th>Total Revenue</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Starter</td>
-<td>0-10K</td>
-<td>$0.20</td>
-<td>$29/month</td>
+<td>0-50K</td>
+<td>$99</td>
+<td>$0.002</td>
+<td>$99-199</td>
 </tr>
 <tr>
 <td>Professional</td>
-<td>10K-100K</td>
-<td>$0.15</td>
-<td>$99/month</td>
+<td>50K-500K</td>
+<td>$299</td>
+<td>$0.0015</td>
+<td>$299-1,049</td>
 </tr>
 <tr>
 <td>Business</td>
-<td>100K-1M</td>
-<td>$0.12</td>
-<td>$299/month</td>
+<td>500K-5M</td>
+<td>$999</td>
+<td>$0.001</td>
+<td>$999-5,999</td>
 </tr>
 <tr>
 <td>Enterprise</td>
-<td>1M+</td>
-<td>$0.10</td>
-<td>$999/month</td>
+<td>5M+</td>
+<td>$2,999</td>
+<td>$0.0008</td>
+<td>$2,999+</td>
 </tr>
 </tbody>
 </table>
 <br/>
-<h2>Cost Monitoring and Alerts</h2>
+<h3>Cost vs Revenue Analysis</h3>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Monthly Revenue</th>
+<th>Monthly Cost</th>
+<th>Gross Margin</th>
+<th>Net Margin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Starter</td>
+<td>$99-199</td>
+<td>$50-80</td>
+<td>$49-119</td>
+<td>50-60%</td>
+</tr>
+<tr>
+<td>Professional</td>
+<td>$299-1,049</td>
+<td>$80-200</td>
+<td>$219-849</td>
+<td>65-75%</td>
+</tr>
+<tr>
+<td>Business</td>
+<td>$999-5,999</td>
+<td>$200-800</td>
+<td>$799-5,199</td>
+<td>75-85%</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>$2,999+</td>
+<td>$800+</td>
+<td>$2,199+</td>
+<td>80-90%</td>
+</tr>
+</tbody>
+</table>
 <br/>
-<h3>Cost Monitoring Dashboard</h3>
+<h2>Cost Forecasting &amp; Growth Projections</h2>
+<br/>
+<h3>3-Year Cost Projection</h3>
+<table>
+<thead>
+<tr>
+<th>Year</th>
+<th>Customers</th>
+<th>Avg Emails/Customer</th>
+<th>Total Emails</th>
+<th>Infrastructure Cost</th>
+<th>Cost per Email</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Year 1</td>
+<td>200</td>
+<td>100K</td>
+<td>20M</td>
+<td>$240K</td>
+<td>$0.012</td>
+</tr>
+<tr>
+<td>Year 2</td>
+<td>800</td>
+<td>150K</td>
+<td>120M</td>
+<td>$960K</td>
+<td>$0.008</td>
+</tr>
+<tr>
+<td>Year 3</td>
+<td>2,000</td>
+<td>200K</td>
+<td>400M</td>
+<td>$2.4M</td>
+<td>$0.006</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<h3>Break-Even Analysis</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+breakEven:
+  fixedCosts: 50000        # Monthly fixed costs
+  variableCostPerEmail: 0.003
+  averageRevenuePerEmail: 0.008
+  contributionMargin: 0.005
+  breakEvenEmails: 10000000  # emails per month
+  breakEvenCustomers: 100    # at 100K emails per customer
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Cost Monitoring &amp; Governance</h2>
+<br/>
+<h3>Real-Time Cost Monitoring</h3>
 <ac:structured-macro ac:name="code" ac:schema-version="1">
   <ac:parameter ac:name="language">json</ac:parameter>
   <ac:plain-text-body><![CDATA[
 {
   "costAlerts": [
     {
-      "name": "Monthly Budget Alert",
-      "threshold": 1000,
-      "currency": "USD",
-      "timeUnit": "MONTHLY",
-      "budgetType": "COST"
+      "name": "Daily Lambda Cost Alert",
+      "threshold": 50,
+      "service": "AWS Lambda",
+      "timeframe": "daily"
     },
     {
-      "name": "Lambda Cost Spike",
-      "threshold": 200,
-      "currency": "USD",
-      "timeUnit": "DAILY",
-      "services": ["AWS Lambda"]
+      "name": "DynamoDB Capacity Alert", 
+      "threshold": 80,
+      "metric": "ConsumedReadCapacityUnits",
+      "timeframe": "hourly"
+    },
+    {
+      "name": "Step Functions Cost Spike",
+      "threshold": 100,
+      "service": "AWS Step Functions",
+      "timeframe": "daily"
     }
   ]
 }
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <br/>
-<h3>Cost Optimization Automation</h3>
-<ac:structured-macro ac:name="code" ac:schema-version="1">
-  <ac:parameter ac:name="language">python</ac:parameter>
-  <ac:plain-text-body><![CDATA[
-# Automated cost optimization
-def optimize_costs():
-    # Right-size Lambda functions
-    optimize_lambda_memory()
-    
-    # Clean up unused resources
-    cleanup_old_templates()
-    
-    # Optimize DynamoDB capacity
-    adjust_dynamodb_capacity()
-    
-    # Archive old data
-    archive_old_analytics_data()
-]]></ac:plain-text-body>
-</ac:structured-macro>
-<br/>
-<h2>ROI Analysis</h2>
-<br/>
-<h3>Revenue Model</h3>
-<ul>
-<li><strong>Subscription Revenue</strong>: $50-500 per tenant per month</li>
-<li><strong>Usage-based Revenue</strong>: $0.15-0.20 per email sent</li>
-<li><strong>Premium Features</strong>: $10-50 per feature per month</li>
-</ul>
-<br/>
-<h3>Cost vs Revenue</h3>
-<table>
-<thead>
-<tr>
-<th>Tenant Tier</th>
-<th>Monthly Revenue</th>
-<th>Monthly Cost</th>
-<th>Gross Margin</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Starter</td>
-<td>$29-99</td>
-<td>$15-25</td>
-<td>60-75%</td>
-</tr>
-<tr>
-<td>Professional</td>
-<td>$99-299</td>
-<td>$25-75</td>
-<td>70-80%</td>
-</tr>
-<tr>
-<td>Business</td>
-<td>$299-999</td>
-<td>$75-200</td>
-<td>75-85%</td>
-</tr>
-<tr>
-<td>Enterprise</td>
-<td>$999+</td>
-<td>$200-500</td>
-<td>80-90%</td>
-</tr>
-</tbody>
-</table>
-<br/>
-<h3>Break-even Analysis</h3>
-<ul>
-<li><strong>Customer Acquisition Cost</strong>: $150-300</li>
-<li><strong>Monthly Churn Rate</strong>: 5-10%</li>
-<li><strong>Break-even Time</strong>: 3-6 months</li>
-<li><strong>Lifetime Value</strong>: $1,500-5,000</li>
-</ul>
-<br/>
-<h2>Cost Forecasting</h2>
-<br/>
-<h3>Growth Projections</h3>
-<table>
-<thead>
-<tr>
-<th>Year</th>
-<th>Customers</th>
-<th>Avg Revenue/Customer</th>
-<th>Total Revenue</th>
-<th>Total Costs</th>
-<th>Net Margin</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Year 1</td>
-<td>100</td>
-<td>$200</td>
-<td>$240K</td>
-<td>$120K</td>
-<td>50%</td>
-</tr>
-<tr>
-<td>Year 2</td>
-<td>500</td>
-<td>$250</td>
-<td>$1.5M</td>
-<td>$600K</td>
-<td>60%</td>
-</tr>
-<tr>
-<td>Year 3</td>
-<td>2,000</td>
-<td>$300</td>
-<td>$7.2M</td>
-<td>$2.5M</td>
-<td>65%</td>
-</tr>
-</tbody>
-</table>
-<br/>
-<h3>Scaling Cost Model</h3>
+<h3>Cost Allocation by Tenant</h3>
 <ac:structured-macro ac:name="code" ac:schema-version="1">
   <ac:parameter ac:name="language">javascript</ac:parameter>
   <ac:plain-text-body><![CDATA[
-// Cost scaling formula
-const calculateScalingCost = (customers, avgEmailsPerCustomer) => {
-  const totalEmails = customers * avgEmailsPerCustomer;
-  const baseCost = 1000; // Fixed monthly costs
-  const variableCost = totalEmails * 0.0001; // Per email cost
-  const economiesOfScale = Math.max(0.7, 1 - (customers / 10000)); // Scale efficiency
-  
-  return (baseCost + variableCost) * economiesOfScale;
+// Tenant cost allocation for standalone platform
+const calculateTenantCost = (tenantUsage) => {
+  return {
+    emailProcessing: tenantUsage.emailsSent * 0.003,
+    fileStorage: tenantUsage.storageGB * 0.025,
+    apiCalls: tenantUsage.apiCalls * 0.0000035,
+    analytics: tenantUsage.analyticsQueries * 0.001,
+    stepFunctions: tenantUsage.campaigns * 0.05,
+    total: calculateTotal(tenantUsage)
+  };
 };
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <br/>
-<h2>Cost Optimization Recommendations</h2>
+<h2>Optimization Recommendations</h2>
 <br/>
 <h3>Immediate Actions (0-30 days)</h3>
 <ol>
-<li><strong>Right-size Lambda functions</strong> - Potential savings: 20-30%</li>
-<li><strong>Enable S3 lifecycle policies</strong> - Potential savings: 15-25%</li>
-<li><strong>Optimize DynamoDB indexes</strong> - Potential savings: 10-20%</li>
-<li><strong>Implement CloudWatch log retention</strong> - Potential savings: 30-40%</li>
+<li><strong>Implement S3 lifecycle policies</strong> - Savings: 40-60%</li>
+<li><strong>Right-size Lambda memory allocation</strong> - Savings: 20-30%</li>
+<li><strong>Enable DynamoDB auto-scaling</strong> - Savings: 15-25%</li>
+<li><strong>Optimize Step Functions batch sizes</strong> - Savings: 30-50%</li>
 </ol>
 <br/>
 <h3>Medium-term Actions (1-6 months)</h3>
 <ol>
-<li><strong>Purchase reserved capacity</strong> - Potential savings: 20-50%</li>
-<li><strong>Implement data archiving</strong> - Potential savings: 25-35%</li>
-<li><strong>Optimize API Gateway usage</strong> - Potential savings: 15-25%</li>
-<li><strong>Implement cost allocation tags</strong> - Better cost visibility</li>
+<li><strong>Migrate to DynamoDB provisioned capacity</strong> - Savings: 30-40%</li>
+<li><strong>Implement OpenSearch data retention policies</strong> - Savings: 25-35%</li>
+<li><strong>Purchase SES dedicated IP pools</strong> - Savings: 10-20%</li>
+<li><strong>Optimize API Gateway caching</strong> - Savings: 15-25%</li>
 </ol>
 <br/>
 <h3>Long-term Actions (6+ months)</h3>
 <ol>
-<li><strong>Multi-region optimization</strong> - Potential savings: 10-20%</li>
-<li><strong>Custom pricing negotiations</strong> - Potential savings: 5-15%</li>
-<li><strong>Advanced caching strategies</strong> - Potential savings: 15-25%</li>
-<li><strong>Workload optimization</strong> - Potential savings: 20-30%</li>
+<li><strong>Implement multi-region cost optimization</strong> - Savings: 10-15%</li>
+<li><strong>Advanced analytics data archiving</strong> - Savings: 40-50%</li>
+<li><strong>Custom SES pricing negotiations</strong> - Savings: 5-15%</li>
+<li><strong>Serverless container optimization</strong> - Savings: 20-30%</li>
 </ol>
 <br/>
-<h2>Cost Governance</h2>
+<hr/>
 <br/>
-<h3>Budget Controls</h3>
-<ul>
-<li><strong>Monthly budget limits</strong> per service</li>
-<li><strong>Automated scaling limits</strong> to prevent cost spikes</li>
-<li><strong>Approval workflows</strong> for high-cost resources</li>
-<li><strong>Regular cost reviews</strong> and optimization sessions</li>
-</ul>
-<br/>
-<h3>Cost Allocation Tags</h3>
-<ac:structured-macro ac:name="code" ac:schema-version="1">
-  <ac:parameter ac:name="language">json</ac:parameter>
-  <ac:plain-text-body><![CDATA[
-{
-  "tags": {
-    "Environment": "production",
-    "Application": "email-platform",
-    "CostCenter": "engineering",
-    "Owner": "platform-team",
-    "Tenant": "tenant-id"
-  }
-}
-]]></ac:plain-text-body>
-</ac:structured-macro>
-<br/>
-<h3>Financial Reporting</h3>
-<ul>
-<li><strong>Monthly cost reports</strong> by service and tenant</li>
-<li><strong>Cost trend analysis</strong> and forecasting</li>
-<li><strong>Budget variance reports</strong> and explanations</li>
-<li><strong>ROI analysis</strong> and profitability metrics</li>
-</ul>
+<p><strong>Document Version</strong>: 2.0 (Standalone Architecture)  </p>
+<p><strong>Last Updated</strong>: August 17, 2024  </p>
+<p><strong>Next Review</strong>: September 17, 2024  </p>
+<p><strong>Architecture</strong>: Standalone Email Platform with Message Centre Integration</p>
 <br/>
 </body>
 </html>
