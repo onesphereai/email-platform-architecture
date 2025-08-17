@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>02_integration_flow_description</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Integration Flow Description</h1>
+<br/>
+<h2>Overview</h2>
+<p>This diagram details the step-by-step integration flow between Message Centre and the standalone Email Platform, showing how templates and email campaigns are processed.</p>
+<br/>
+<h2>Flow Steps</h2>
+<br/>
+<h3>Template Upload Process (Steps 1-3)</h3>
+<ol>
+<li><strong>Get Presigned URL</strong>: Message Centre API requests presigned URL from Email Platform</li>
+<li><strong>Receive URL</strong>: Email Platform returns secure presigned URL for S3 upload</li>
+<li><strong>Upload Template</strong>: Message Centre uploads template directly to S3 using presigned URL</li>
+</ol>
+<br/>
+<h3>Email Campaign Processing (Steps 4-6)</h3>
+<ol>
+<li><strong>Upload CSV</strong>: User uploads CSV file with recipient data through Message Centre</li>
+<li><strong>Trigger Processing</strong>: Message Centre API calls Email Platform to start processing</li>
+<li><strong>Process File</strong>: File Processor Step Functions split CSV and create message records</li>
+</ol>
+<br/>
+<h3>Message Storage &amp; Scheduling (Steps 7-8)</h3>
+<ol>
+<li><strong>Store Messages</strong>: Individual message records stored in DynamoDB with status tracking</li>
+<li><strong>Schedule (Optional)</strong>: If scheduling enabled, EventBridge creates scheduled events</li>
+</ol>
+<br/>
+<h3>Email Delivery Pipeline (Steps 9-10)</h3>
+<ol>
+<li><strong>Trigger Send</strong>: DynamoDB streams or scheduled events trigger Send Pipeline</li>
+<li><strong>Send Emails</strong>: Step Functions orchestrate email sending through Amazon SES</li>
+</ol>
+<br/>
+<h3>Analytics &amp; Monitoring (Steps 11-12)</h3>
+<ol>
+<li><strong>SES Events</strong>: Delivery, bounce, complaint, open, and click events flow to OpenSearch</li>
+<li><strong>Analytics Data</strong>: Message status and transaction data replicated to OpenSearch</li>
+</ol>
+<br/>
+<h3>Status Tracking (Step 13)</h3>
+<ol>
+<li><strong>Status Check</strong>: Message Centre can query Email Platform Status API for real-time updates</li>
+</ol>
+<br/>
+<h2>API Endpoints</h2>
+<br/>
+<h3>Template Management</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/templates/presigned-url
+GET /api/v1/templates/{template_id}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Email Processing</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/campaigns
+GET /api/v1/campaigns/{transaction_id}/status
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>File Upload</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/files/presigned-url
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Data Flow Patterns</h2>
+<br/>
+<h3>Asynchronous Processing</h3>
+<ul>
+<li>File processing happens asynchronously via Step Functions</li>
+<li>Status updates provided through polling or webhooks</li>
+<li>Non-blocking user experience</li>
+</ul>
+<br/>
+<h3>Event-Driven Architecture</h3>
+<ul>
+<li>DynamoDB streams trigger downstream processing</li>
+<li>EventBridge handles scheduled delivery</li>
+<li>SNS notifications for SES events</li>
+</ul>
+<br/>
+<h3>Microservices Integration</h3>
+<ul>
+<li>Clear API boundaries between services</li>
+<li>Independent scaling and deployment</li>
+<li>Fault isolation and resilience</li>
+</ul>
+<br/>
+<h2>Error Handling</h2>
+<br/>
+<h3>File Processing Errors</h3>
+<ul>
+<li>Invalid CSV format validation</li>
+<li>Duplicate email detection</li>
+<li>Template validation failures</li>
+</ul>
+<br/>
+<h3>Delivery Errors</h3>
+<ul>
+<li>SES sending failures</li>
+<li>Bounce and complaint handling</li>
+<li>Retry mechanisms with exponential backoff</li>
+</ul>
+<br/>
+<h3>Integration Errors</h3>
+<ul>
+<li>API timeout handling</li>
+<li>Circuit breaker patterns</li>
+<li>Graceful degradation</li>
+</ul>
+<br/>
+<h2>Security Considerations</h2>
+<br/>
+<h3>Authentication</h3>
+<ul>
+<li>API key validation for all requests</li>
+<li>Optional OAuth 2.0 for enhanced security</li>
+<li>Service-to-service authentication via IAM roles</li>
+</ul>
+<br/>
+<h3>Data Protection</h3>
+<ul>
+<li>Presigned URLs for secure file uploads</li>
+<li>Encryption in transit and at rest</li>
+<li>Access logging and audit trails</li>
+</ul>
+<br/>
+<h3>Rate Limiting</h3>
+<ul>
+<li>API Gateway throttling</li>
+<li>SES sending rate management</li>
+<li>DynamoDB capacity protection</li>
+</ul>
+<br/>
+<h2>Performance Optimization</h2>
+<br/>
+<h3>Batch Processing</h3>
+<ul>
+<li>Efficient CSV file splitting</li>
+<li>Parallel message processing</li>
+<li>Optimized DynamoDB batch operations</li>
+</ul>
+<br/>
+<h3>Caching</h3>
+<ul>
+<li>Template caching for repeated use</li>
+<li>Configuration caching</li>
+<li>Connection pooling</li>
+</ul>
+<br/>
+<h3>Monitoring</h3>
+<ul>
+<li>Real-time performance metrics</li>
+<li>Latency tracking</li>
+<li>Error rate monitoring</li>
+</ul>
+<br/>
+</body>
+</html>

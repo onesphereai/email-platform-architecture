@@ -1,10 +1,10 @@
 # Email Platform Architecture
 
-Comprehensive architecture documentation and diagrams for the Email Platform - a self-service email marketing solution for B2B customers.
+Comprehensive architecture documentation and diagrams for the Email Platform - a standalone email marketing solution with Message Centre integration.
 
 ## 📋 Executive Documentation
 
-- **[Architecture Documentation](Email_Platform_Architecture_Documentation.md)** - Complete technical architecture
+- **[Standalone Architecture Documentation](Email_Platform_Standalone_Architecture.md)** - Complete standalone architecture
 - **[API Specification](Email_Platform_API_Specification.md)** - REST API documentation
 - **[Documentation Summary](Email_Platform_Documentation_Summary.md)** - Executive summary
 
@@ -47,90 +47,153 @@ The architecture is organized into five comprehensive views, each focusing on sp
 - Pricing models and revenue projections
 - Financial planning and ROI analysis
 
-## 🎨 Quick Reference - Key Diagrams
+## 🎨 Standalone Architecture Diagrams
 
 ### High-Level Architecture
-- [Clean High Level Architecture](generated-diagrams/16_clean_high_level_architecture.png) | [Flow Description](Architecture/Deployment-View/16_clean_high_level_architecture_flow.md)
-- [Original High Level Architecture](generated-diagrams/01_high_level_architecture.png) | [Flow Description](Architecture/Deployment-View/01_high_level_architecture_flow.md)
+- [Standalone High Level Architecture](generated-diagrams/01_high_level_architecture.png) | [Flow Description](Architecture/Deployment-View/01_high_level_architecture_flow.md)
 
-### Security & Compliance
-- [Clean Security Architecture](generated-diagrams/19_clean_security_architecture.png) | [Flow Description](Architecture/Security-View/19_clean_security_architecture_flow.md)
-- [Authentication Sequence](generated-diagrams/14_authentication_sequence.png) | [Flow Description](Architecture/Security-View/14_authentication_sequence_flow.md)
+### Integration & Component Views
+- [Integration Flow](generated-diagrams/02_integration_flow.png) | [Flow Description](Architecture/Development-View/02_integration_flow_description.md)
+- [Detailed Component Architecture](generated-diagrams/03_detailed_component_architecture.png) | [Flow Description](Architecture/Development-View/03_detailed_component_architecture_flow.md)
 
-### Data & Multi-Tenancy
-- [Clean Multi-Tenant Architecture](generated-diagrams/18_clean_multitenant_architecture.png) | [Flow Description](Architecture/Data-View/18_clean_multitenant_architecture_flow.md)
-- [Email Delivery & Analytics](generated-diagrams/13_email_delivery_analytics_sequence.png) | [Flow Description](Architecture/Data-View/13_email_delivery_analytics_sequence_flow.md)
+### Process Flows
+- [Callback Flow](generated-diagrams/04_callback_flow.png) | [Flow Description](Architecture/Development-View/04_callback_flow_description.md)
 
-### Development & APIs
-- [API Integration Sequence](generated-diagrams/12_api_integration_sequence.png) | [Flow Description](Architecture/Development-View/12_api_integration_sequence_flow.md)
-- [Campaign Creation Sequence](generated-diagrams/10_campaign_creation_sequence.png) | [Flow Description](Architecture/Development-View/10_campaign_creation_sequence_flow.md)
+### Security Architecture
+- [Security Architecture](generated-diagrams/05_security_architecture.png) | [Flow Description](Architecture/Security-View/05_security_architecture_flow.md)
 
-## 🏗️ Architecture Highlights
+### Data Flow Diagrams
+- [Transaction Status Flow](generated-diagrams/06_transaction_status_flow.png) | [Flow Description](Architecture/Data-View/06_transaction_status_flow_description.md)
+- [Message Status Flow](generated-diagrams/07_message_status_flow.png) | [Flow Description](Architecture/Data-View/07_message_status_flow_description.md)
 
-- **Multi-tenant silo model** with complete data isolation
-- **Serverless architecture** using AWS Lambda, API Gateway, DynamoDB
-- **Single table design** optimized for DynamoDB access patterns
-- **Comprehensive security** with multiple authentication methods
-- **Email authentication** with SPF, DKIM, DMARC
-- **Real-time analytics** with OpenSearch Serverless
-- **Scalable processing** with SQS/SNS message queuing
+## 🏗️ Standalone Architecture Highlights
 
-## 🔧 Technology Stack
+### Key Architectural Decisions
+- **Standalone Email Platform**: Independent service with dedicated APIs and storage
+- **Message Centre Integration**: Wrapper APIs for seamless integration
+- **Presigned URL Strategy**: Secure file uploads directly to S3
+- **Hierarchical Data Model**: Transaction → Batch → Message structure
+- **Event-Driven Processing**: Step Functions and EventBridge orchestration
 
+### Technology Stack
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| Frontend | Angular, TypeScript | User interface |
-| API Gateway | AWS API Gateway | Request routing |
-| Authentication | AWS Cognito | SAML SSO |
-| Backend | Node.js, Lambda | Business logic |
-| Database | DynamoDB | Data storage |
-| File Storage | S3 | Templates and assets |
+| Frontend | Angular, TypeScript | Message Centre UI |
+| API Gateway | AWS API Gateway | Request routing & security |
+| Authentication | API Keys, OAuth 2.0, mTLS | Multi-layer security |
+| Backend | Node.js, Lambda | Serverless processing |
+| Orchestration | Step Functions, EventBridge | Workflow management |
+| Database | DynamoDB | Scalable NoSQL storage |
+| File Storage | S3 | Templates and CSV files |
 | Email Service | Amazon SES | Email delivery |
-| Message Queue | SQS, SNS | Async processing |
-| Analytics | OpenSearch | Search and analytics |
+| Analytics | OpenSearch Serverless | Real-time analytics |
 | Monitoring | CloudWatch, X-Ray | Observability |
-| CI/CD | Jenkins, Serverless | Deployment |
+
+### Processing Pipeline
+1. **File Upload**: Templates and CSV files via presigned URLs
+2. **File Processing**: Step Functions split CSV into batches and messages
+3. **Scheduling**: Optional EventBridge scheduling for future delivery
+4. **Email Delivery**: Step Functions orchestrate SES email sending
+5. **Status Tracking**: Real-time status updates and callback notifications
+6. **Analytics**: OpenSearch for engagement tracking and reporting
+
+### Data Architecture
+```
+Transaction (Campaign Level)
+├── Status: ACCEPT → PROCESSING → SCHEDULED/READY_TO_SEND → SENT → COMPLETED
+├── Batch 1 (File Chunk)
+│   ├── Message 1 (Individual Email)
+│   ├── Message 2 (Individual Email)
+│   └── ...
+├── Batch 2 (File Chunk)
+│   └── ...
+└── Analytics Data (OpenSearch)
+```
+
+### Security Features
+- **Multi-layer Authentication**: API Keys (mandatory), OAuth 2.0 (optional), mTLS (optional)
+- **Data Encryption**: At rest and in transit with KMS
+- **Access Control**: IAM roles and fine-grained permissions
+- **Compliance**: GDPR, CCPA, CAN-SPAM, Australian Spam Act
 
 ## 📊 Implementation Phases
 
-### Phase 1: MVP (Q1 2024)
-- Basic campaign creation and sending
-- Simple drag-and-drop builder
-- SAML authentication
-- Basic reporting
+### Phase 1: Core Standalone Platform (Q1 2024)
+- Standalone Email API development
+- File processing pipeline with Step Functions
+- Basic template management via presigned URLs
+- Transaction and message status tracking
 
-### Phase 2: Enhanced Features (Q2 2024)
-- Advanced template management
-- A/B testing capabilities
-- Enhanced analytics
-- API access
+### Phase 2: Enhanced Integration (Q2 2024)
+- Message Centre wrapper API integration
+- Scheduling capabilities with EventBridge
+- Callback system for status notifications
+- Enhanced security with multiple auth methods
 
-### Phase 3: Enterprise Features (Q3 2024)
-- Marketing automation
-- Advanced segmentation
-- CRM integrations
-- Multi-brand support
+### Phase 3: Advanced Features (Q3 2024)
+- Real-time analytics with OpenSearch
+- Advanced error handling and retry logic
+- Performance optimization and scaling
+- Comprehensive monitoring and alerting
 
-### Phase 4: AI and Advanced Analytics (Q4 2024)
-- AI-powered optimization
-- Advanced personalization
-- Cross-channel orchestration
-- Enterprise governance
+### Phase 4: Enterprise Features (Q4 2024)
+- AI-powered optimization and insights
+- Advanced personalization capabilities
+- Multi-region deployment
+- Enterprise governance and compliance
 
 ## 🔒 Compliance & Security
 
-- **GDPR, CCPA compliance** with data sovereignty
-- **Email standards compliance** (CAN-SPAM, Australian Spam Act)
-- **Enterprise security** with encryption at rest and in transit
-- **Comprehensive monitoring** with audit trails
-- **Rate limiting and throttling** for abuse prevention
+### Email Compliance
+- **CAN-SPAM Act**: US email marketing regulations
+- **GDPR**: European data protection compliance
+- **CCPA**: California privacy compliance
+- **Australian Spam Act**: Australian email regulations
+- **CASL**: Canadian Anti-Spam Legislation
+
+### Security Standards
+- **SOC 2 Type II**: Security and availability controls
+- **ISO 27001**: Information security management
+- **Multi-layer Security**: WAF, API Gateway, IAM, KMS
+- **Audit Logging**: Comprehensive access and activity logs
+
+### Data Protection
+- **Encryption**: AES-256 encryption at rest and TLS 1.2+ in transit
+- **Access Control**: Role-based and scope-based permissions
+- **Data Isolation**: Multi-tenant data separation
+- **Backup & Recovery**: Automated backup with point-in-time recovery
+
+## 🔧 Development Tools
+
+### Documentation Generation
+- **Confluence HTML**: Run `python3 md_to_confluence.py` to generate Confluence-ready HTML files
+- **Diagram Generation**: AWS architecture diagrams using Python diagrams package
+- **Version Control**: Git-based documentation versioning
+
+### Repository Structure
+```
+├── Email_Platform_Standalone_Architecture.md    # Main architecture doc
+├── Email_Platform_API_Specification.md          # API documentation
+├── Email_Platform_Documentation_Summary.md      # Executive summary
+├── README.md                                     # This file
+├── generated-diagrams/                          # Architecture diagrams (01-07)
+├── Architecture/                                # Detailed architecture views
+│   ├── Development-View/                       # Development architecture
+│   ├── Deployment-View/                        # Infrastructure architecture
+│   ├── Security-View/                          # Security architecture
+│   ├── Data-View/                              # Data architecture
+│   └── Cost-View/                              # Cost analysis
+├── confluence-html/                            # Confluence-ready HTML files
+└── md_to_confluence.py                         # HTML conversion script
+```
 
 ## 📞 Support
 
 For questions about this architecture:
-- **Technical Documentation**: See individual markdown files
-- **Architecture Questions**: Contact the development team
-- **Implementation Support**: Refer to the API specification
+- **Technical Documentation**: See individual markdown files in Architecture/ folders
+- **Standalone Architecture**: Refer to Email_Platform_Standalone_Architecture.md
+- **API Integration**: Contact the development team for integration support
+- **Security Questions**: Refer to Security View documentation
 
 ## 📄 License
 
@@ -138,6 +201,7 @@ This documentation is proprietary to OneSphere AI and Message Centre.
 
 ---
 
-**Generated**: Thu Aug 14 12:46:15 AEST 2025
-**Version**: 1.0.0
-**Last Updated**: Thu Aug 14 12:46:15 AEST 2025
+**Generated**: August 17, 2024  
+**Version**: 2.0.0 (Standalone Architecture - Cleaned)  
+**Last Updated**: August 17, 2024  
+**Architecture Type**: Standalone Email Platform with Message Centre Integration

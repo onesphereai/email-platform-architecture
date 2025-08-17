@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email_Platform_Standalone_Architecture</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Email Platform - Standalone Architecture Documentation</h1>
+<br/>
+<h2>Executive Summary</h2>
+<br/>
+<p>The Email Platform has been redesigned as a standalone service with clear separation from Message Centre. This architecture provides better scalability, maintainability, and allows for independent deployment and scaling of email functionality.</p>
+<br/>
+<h2>Key Architectural Decisions</h2>
+<br/>
+<h3>1. Standalone Email API Architecture</h3>
+<ul>
+<li><strong>Email Platform</strong>: Independent service with its own APIs, storage, and processing</li>
+<li><strong>Message Centre</strong>: Acts as a wrapper/orchestrator that integrates with Email Platform APIs</li>
+<li><strong>Benefits</strong>: Clear separation of concerns, independent scaling, better maintainability</li>
+</ul>
+<br/>
+<h3>2. File Upload Strategy</h3>
+<ul>
+<li><strong>Templates</strong>: Uploaded to Email Platform S3 via presigned URLs</li>
+<li><strong>CSV Files</strong>: Recipient data uploaded via presigned URLs</li>
+<li><strong>Benefits</strong>: Reduced API payload sizes, direct S3 upload, better performance</li>
+</ul>
+<br/>
+<h3>3. Hierarchical Data Structure</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Transaction ID (Parent Level)
+├── Batch ID (Split File Chunks)
+    ├── Email Message ID (Individual Recipients)
+    ├── Email Message ID (Individual Recipients)
+    └── ...
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>4. Processing Pipeline</h3>
+<ul>
+<li><strong>Step Functions</strong>: Handle file splitting and conditional scheduling</li>
+<li><strong>EventBridge</strong>: Manage scheduled email delivery</li>
+<li><strong>DynamoDB Streams</strong>: Trigger email sending pipeline</li>
+<li><strong>Status Management</strong>: Transaction-level and message-level status tracking</li>
+</ul>
+<br/>
+<h2>Architecture Overview</h2>
+<br/>
+<h3>High-Level Components</h3>
+<br/>
+<ol>
+<li><strong>Message Centre Layer</strong></li>
+<ul>
+<li>Web UI for user interaction</li>
+<li>Wrapper APIs that integrate with Email Platform</li>
+</ul>
+</ol>
+<br/>
+<ol>
+<li><strong>Email Platform Services</strong></li>
+<ul>
+<li>Template Management API</li>
+<li>Presigned URL Service</li>
+<li>Email Processing API</li>
+<li>Status Tracking API</li>
+<li>Callback Service</li>
+</ul>
+</ol>
+<br/>
+<ol>
+<li><strong>Processing Pipeline</strong></li>
+<ul>
+<li>File Processing Step Functions</li>
+<li>Scheduling Step Functions</li>
+<li>Email Sending Step Functions</li>
+</ul>
+</ol>
+<br/>
+<ol>
+<li><strong>Storage Layer</strong></li>
+<ul>
+<li>S3 for templates and CSV files</li>
+<li>DynamoDB for message data and status</li>
+<li>OpenSearch for analytics and reporting</li>
+</ul>
+</ol>
+<br/>
+<ol>
+<li><strong>Email Delivery</strong></li>
+<ul>
+<li>Amazon SES for email delivery</li>
+<li>SNS for SES event notifications</li>
+</ul>
+</ol>
+<br/>
+<h2>Data Architecture</h2>
+<br/>
+<h3>DynamoDB Design</h3>
+<br/>
+<h4>Transaction Table</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "PK": "TRANSACTION#<transaction_id>",
+  "SK": "METADATA",
+  "transaction_id": "uuid",
+  "status": "ACCEPT|PROCESSING|SCHEDULED|READY_TO_SEND|SENT|COMPLETED",
+  "template_id": "uuid",
+  "callback_url": "https://...",
+  "total_messages": 1000,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Batch Table</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "PK": "TRANSACTION#<transaction_id>",
+  "SK": "BATCH#<batch_id>",
+  "batch_id": "uuid",
+  "transaction_id": "uuid",
+  "status": "PROCESSING|READY|SENT|COMPLETED",
+  "message_count": 100,
+  "s3_file_path": "s3://bucket/batch-file.csv"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>Message Table</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "PK": "BATCH#<batch_id>",
+  "SK": "MESSAGE#<message_id>",
+  "message_id": "uuid",
+  "batch_id": "uuid",
+  "transaction_id": "uuid",
+  "recipient_email": "user@example.com",
+  "placeholder_data": {"name": "John", "company": "ACME"},
+  "status": "CREATED|SCHEDULED|READY_TO_SEND|SENDING|SENT|DELIVERED|BOUNCED|COMPLAINED|OPENED|CLICKED",
+  "scheduled_time": "2024-01-01T10:00:00Z",
+  "sent_time": "2024-01-01T10:05:00Z",
+  "delivered_time": "2024-01-01T10:06:00Z"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Status Management</h3>
+<br/>
+<h4>Transaction-Level Statuses</h4>
+<ol>
+<li><strong>ACCEPT</strong>: Transaction created in Email API</li>
+<li><strong>PROCESSING</strong>: Messages being loaded into DynamoDB</li>
+<li><strong>SCHEDULED</strong>: All messages scheduled (if scheduling enabled)</li>
+<li><strong>READY<em>TO</em>SEND</strong>: Ready for delivery</li>
+<li><strong>SENT</strong>: All messages sent to SES</li>
+<li><strong>COMPLETED</strong>: All messages delivered/bounced</li>
+</ol>
+<br/>
+<h4>Message-Level Statuses</h4>
+<ol>
+<li><strong>CREATED</strong>: Message record created</li>
+<li><strong>SCHEDULED</strong>: Message scheduled for future delivery</li>
+<li><strong>READY<em>TO</em>SEND</strong>: Ready for processing</li>
+<li><strong>SENDING</strong>: Being processed by SES</li>
+<li><strong>SENT</strong>: Sent to SES</li>
+<li><strong>DELIVERED</strong>: Successfully delivered</li>
+<li><strong>BOUNCED</strong>: Delivery failed</li>
+<li><strong>COMPLAINED</strong>: Spam complaint received</li>
+<li><strong>OPENED</strong>: Email opened by recipient</li>
+<li><strong>CLICKED</strong>: Link clicked in email</li>
+</ol>
+<br/>
+<h2>Processing Flows</h2>
+<br/>
+<h3>1. Template Upload Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">mermaid</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+sequenceDiagram
+    participant MC as Message Centre
+    participant EPA as Email Platform API
+    participant S3 as S3 Templates
+    
+    MC->>EPA: Request presigned URL for template
+    EPA->>MC: Return presigned URL
+    MC->>S3: Upload template using presigned URL
+    MC->>EPA: Confirm template upload
+    EPA->>EPA: Store template metadata
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. Email Campaign Processing Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">mermaid</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+sequenceDiagram
+    participant MC as Message Centre
+    participant EPA as Email Platform API
+    participant SF as Step Functions
+    participant DDB as DynamoDB
+    participant EB as EventBridge
+    participant SES as Amazon SES
+    
+    MC->>EPA: Submit CSV file with template ID
+    EPA->>SF: Trigger file processing
+    SF->>SF: Split CSV into batches
+    SF->>DDB: Store transaction, batches, messages
+    
+    alt Scheduling Enabled
+        SF->>EB: Create scheduled events
+        EB->>SF: Trigger at scheduled time
+    end
+    
+    SF->>DDB: Update status to READY_TO_SEND
+    DDB->>SF: Stream trigger (messages ready)
+    SF->>SES: Send emails
+    SF->>DDB: Update message status
+    SES->>EPA: Delivery notifications
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>3. Callback Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">mermaid</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+sequenceDiagram
+    participant MC as Message Centre
+    participant EPA as Email Platform API
+    participant CB as Callback Service
+    participant WH as Customer Webhook
+    
+    MC->>EPA: Submit request with callback URL
+    EPA->>EPA: Store callback URL with transaction
+    
+    loop For each status change
+        EPA->>CB: Trigger callback
+        CB->>WH: HTTP POST with status update
+        WH->>CB: Acknowledge receipt
+    end
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Security Architecture</h2>
+<br/>
+<h3>Authentication &amp; Authorization</h3>
+<ol>
+<li><strong>API Key (Mandatory)</strong>: All requests must include valid API key</li>
+<li><strong>OAuth 2.0 (Optional)</strong>: For enhanced security and user context</li>
+<li><strong>mTLS (Optional)</strong>: For high-security environments</li>
+</ol>
+<br/>
+<h3>Security Controls</h3>
+<ul>
+<li><strong>AWS WAF</strong>: Protection against common web attacks</li>
+<li><strong>API Gateway</strong>: Rate limiting and request validation</li>
+<li><strong>IAM Roles</strong>: Service-to-service authentication</li>
+<li><strong>Secrets Manager</strong>: Secure storage of API keys and secrets</li>
+<li><strong>KMS</strong>: Encryption key management</li>
+</ul>
+<br/>
+<h3>Data Protection</h3>
+<ul>
+<li><strong>Encryption at Rest</strong>: All data encrypted in S3, DynamoDB, and OpenSearch</li>
+<li><strong>Encryption in Transit</strong>: TLS 1.2+ for all communications</li>
+<li><strong>Data Isolation</strong>: Multi-tenant data separation</li>
+<li><strong>Access Logging</strong>: Comprehensive audit trails</li>
+</ul>
+<br/>
+<h2>Integration Patterns</h2>
+<br/>
+<h3>API Integration</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/email/campaigns
+Authorization: Bearer <oauth_token>
+X-API-Key: <api_key>
+Content-Type: application/json
+
+{
+  "template_id": "uuid",
+  "csv_file_url": "s3://bucket/recipients.csv",
+  "callback_url": "https://customer.com/webhook",
+  "schedule": {
+    "send_at": "2024-01-01T10:00:00Z"
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Webhook Callbacks</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST https://customer.com/webhook
+Content-Type: application/json
+X-Signature: <hmac_signature>
+
+{
+  "transaction_id": "uuid",
+  "status": "COMPLETED",
+  "timestamp": "2024-01-01T10:30:00Z",
+  "summary": {
+    "total_messages": 1000,
+    "delivered": 950,
+    "bounced": 30,
+    "complained": 5,
+    "opened": 400,
+    "clicked": 120
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Analytics &amp; Reporting</h2>
+<br/>
+<h3>OpenSearch Data Structure</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "transaction_id": "uuid",
+  "message_id": "uuid",
+  "event_type": "delivered|bounced|complained|opened|clicked",
+  "timestamp": "2024-01-01T10:06:00Z",
+  "recipient_email": "user@example.com",
+  "metadata": {
+    "user_agent": "...",
+    "ip_address": "...",
+    "link_url": "..."
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Analytics Capabilities</h3>
+<ul>
+<li>Real-time delivery tracking</li>
+<li>Engagement analytics (opens, clicks)</li>
+<li>Bounce and complaint analysis</li>
+<li>Performance metrics and trends</li>
+<li>Custom reporting and dashboards</li>
+</ul>
+<br/>
+<h2>Scalability &amp; Performance</h2>
+<br/>
+<h3>Horizontal Scaling</h3>
+<ul>
+<li><strong>Lambda Functions</strong>: Auto-scaling based on demand</li>
+<li><strong>Step Functions</strong>: Parallel processing of batches</li>
+<li><strong>DynamoDB</strong>: On-demand scaling</li>
+<li><strong>SES</strong>: Built-in scalability</li>
+</ul>
+<br/>
+<h3>Performance Optimizations</h3>
+<ul>
+<li><strong>Batch Processing</strong>: Efficient file splitting and processing</li>
+<li><strong>Parallel Execution</strong>: Concurrent email sending</li>
+<li><strong>Caching</strong>: Template and configuration caching</li>
+<li><strong>Connection Pooling</strong>: Optimized database connections</li>
+</ul>
+<br/>
+<h2>Monitoring &amp; Observability</h2>
+<br/>
+<h3>CloudWatch Metrics</h3>
+<ul>
+<li>API request rates and latency</li>
+<li>Processing pipeline performance</li>
+<li>Email delivery rates</li>
+<li>Error rates and types</li>
+</ul>
+<br/>
+<h3>X-Ray Tracing</h3>
+<ul>
+<li>End-to-end request tracing</li>
+<li>Performance bottleneck identification</li>
+<li>Service dependency mapping</li>
+</ul>
+<br/>
+<h3>Alerting</h3>
+<ul>
+<li>Failed email deliveries</li>
+<li>High bounce rates</li>
+<li>API error rates</li>
+<li>Processing delays</li>
+</ul>
+<br/>
+<h2>Cost Optimization</h2>
+<br/>
+<h3>Cost Factors</h3>
+<ul>
+<li><strong>Lambda</strong>: Pay per execution</li>
+<li><strong>Step Functions</strong>: Pay per state transition</li>
+<li><strong>DynamoDB</strong>: On-demand pricing</li>
+<li><strong>S3</strong>: Storage and transfer costs</li>
+<li><strong>SES</strong>: Pay per email sent</li>
+</ul>
+<br/>
+<h3>Optimization Strategies</h3>
+<ul>
+<li>Efficient batch sizing</li>
+<li>Optimal Lambda memory allocation</li>
+<li>DynamoDB capacity planning</li>
+<li>S3 lifecycle policies</li>
+<li>SES reputation management</li>
+</ul>
+<br/>
+<h2>Implementation Phases</h2>
+<br/>
+<h3>Phase 1: Core Platform (Q1 2024)</h3>
+<ul>
+<li>Standalone Email API development</li>
+<li>Basic file processing pipeline</li>
+<li>Template management</li>
+<li>Status tracking</li>
+</ul>
+<br/>
+<h3>Phase 2: Advanced Features (Q2 2024)</h3>
+<ul>
+<li>Scheduling capabilities</li>
+<li>Callback system</li>
+<li>Enhanced analytics</li>
+<li>Security hardening</li>
+</ul>
+<br/>
+<h3>Phase 3: Enterprise Features (Q3 2024)</h3>
+<ul>
+<li>Advanced reporting</li>
+<li>Multi-region deployment</li>
+<li>Enhanced monitoring</li>
+<li>Performance optimization</li>
+</ul>
+<br/>
+<h3>Phase 4: AI &amp; Optimization (Q4 2024)</h3>
+<ul>
+<li>AI-powered optimization</li>
+<li>Predictive analytics</li>
+<li>Advanced personalization</li>
+<li>Machine learning insights</li>
+</ul>
+<br/>
+<h2>Compliance &amp; Governance</h2>
+<br/>
+<h3>Email Compliance</h3>
+<ul>
+<li><strong>CAN-SPAM Act</strong>: Compliance with US regulations</li>
+<li><strong>GDPR</strong>: European data protection compliance</li>
+<li><strong>CCPA</strong>: California privacy compliance</li>
+<li><strong>Australian Spam Act</strong>: Australian regulations</li>
+</ul>
+<br/>
+<h3>Data Governance</h3>
+<ul>
+<li>Data retention policies</li>
+<li>Privacy controls</li>
+<li>Audit logging</li>
+<li>Compliance reporting</li>
+</ul>
+<br/>
+<h2>Disaster Recovery</h2>
+<br/>
+<h3>Backup Strategy</h3>
+<ul>
+<li><strong>DynamoDB</strong>: Point-in-time recovery enabled</li>
+<li><strong>S3</strong>: Cross-region replication</li>
+<li><strong>Configuration</strong>: Infrastructure as Code</li>
+</ul>
+<br/>
+<h3>Recovery Procedures</h3>
+<ul>
+<li><strong>RTO</strong>: 4 hours for full service restoration</li>
+<li><strong>RPO</strong>: 15 minutes maximum data loss</li>
+<li><strong>Failover</strong>: Automated failover to secondary region</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><strong>Document Version</strong>: 2.0  </p>
+<p><strong>Last Updated</strong>: August 17, 2024  </p>
+<p><strong>Next Review</strong>: September 17, 2024</p>
+<br/>
+</body>
+</html>

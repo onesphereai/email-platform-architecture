@@ -1,97 +1,77 @@
-# High Level Architecture - Flow Description
-
-**Diagram**: `01_high_level_architecture.png`
+# High Level Architecture Flow
 
 ## Overview
-This diagram shows the complete high-level architecture of the Email Platform, including user access, core services, data flow, and external integrations.
+This diagram illustrates the standalone Email Platform architecture with clear separation between Message Centre and Email Platform services.
+
+## Components
+
+### Message Centre Layer
+- **Web UI**: User interface for campaign management
+- **Wrapper API**: Orchestrates interactions with Email Platform APIs
+
+### Email Platform (Standalone)
+- **Email API**: Core email processing service
+- **File Storage**: S3 buckets for templates and CSV files
+- **Processing**: Step Functions for file processing and EventBridge for scheduling
+- **Data Layer**: DynamoDB for message storage and OpenSearch for analytics
+- **Email Delivery**: Amazon SES for email delivery and Step Functions for send pipeline
 
 ## Flow Description
 
-| Step | Source | Target | Action | Description |
-|------|--------|--------|--------|-------------|
-| 1 | B2B Customers | Internet | Access Platform | Users access the Email Platform through the internet |
-| 2 | Internet | CloudFront CDN | Route Traffic | Internet traffic is routed through AWS CloudFront CDN |
-| 3 | CloudFront CDN | S3 Static Website | Serve Static Content | CDN serves the Angular application static files from S3 |
-| 4 | CloudFront CDN | API Gateway | API Requests | Dynamic API requests are forwarded to API Gateway |
-| 5 | API Gateway | AWS Cognito | Authenticate | API Gateway validates user authentication through Cognito |
-| 6 | API Gateway | Email Platform UI Backend | UI Requests | Authenticated UI requests are routed to the UI backend service |
-| 7 | API Gateway | Email API | API Requests | External API requests are routed to the standalone Email API |
-| 8 | Email Platform UI Backend | Campaign Manager | Campaign Operations | UI backend delegates campaign operations to the Campaign Manager |
-| 9 | Email API | Email Processor | Email Processing | API requests trigger email processing workflows |
-| 10 | Campaign Manager | Email Queue (SQS) | Queue Messages | Campaign operations are queued for asynchronous processing |
-| 11 | Email Processor | Email Queue (SQS) | Process Queue | Email processor consumes messages from the queue |
-| 12 | Email Queue (SQS) | Amazon SES | Send Emails | Queued email jobs are processed and sent via Amazon SES |
-| 13 | Amazon SES | SNS Notification Topic | Delivery Status | SES publishes delivery status events to SNS |
-| 14 | Email Platform UI Backend | DynamoDB | Store Data | UI operations store data in the single-table DynamoDB |
-| 15 | Email API | DynamoDB | Store Data | API operations store campaign and user data |
-| 16 | Campaign Manager | S3 Storage | Store Templates | Email templates and assets are stored in S3 |
-| 17 | SNS Notification Topic | Analytics Engine | Analytics Data | Delivery events trigger analytics processing |
-| 18 | Analytics Engine | OpenSearch Serverless | Index Data | Analytics data is indexed in OpenSearch for reporting |
-| 19 | Email Platform UI Backend | CloudWatch | Logs & Metrics | Application logs and metrics are sent to CloudWatch |
-| 20 | Email API | CloudWatch | Logs & Metrics | API logs and performance metrics are monitored |
-| 21 | External Systems | Message Centre | Push Data | External systems push data to Message Centre for reporting |
-| 22 | Message Centre | Email API | Report Data | Message Centre sends reporting data to the Email Platform |
-| 23 | Bitbucket | Jenkins | Code Changes | Code changes trigger Jenkins CI/CD pipeline |
-| 24 | Jenkins | Email Platform UI Backend | Deploy | Jenkins deploys updates to the platform services |
+### 1. User Interaction
+- Users interact with Message Centre Web UI
+- Web UI communicates with Message Centre Wrapper API
 
-## Key Components
+### 2. Email Platform Integration
+- Message Centre API integrates with standalone Email Platform API
+- Clear API boundaries between systems
 
-### Frontend Layer
-- **CloudFront CDN**: Global content delivery network for static assets
-- **S3 Static Website**: Hosts the Angular application files
+### 3. File Management
+- Templates stored in dedicated S3 bucket
+- CSV recipient files stored in separate S3 bucket
+- Presigned URLs used for secure file uploads
 
-### API Layer
-- **API Gateway**: Centralized API management with authentication and rate limiting
-- **AWS Cognito**: SAML-based authentication and user management
+### 4. Processing Pipeline
+- File Processing Step Functions handle CSV splitting and message creation
+- EventBridge manages scheduled email delivery
+- DynamoDB stores all message data and status information
 
-### Backend Services
-- **Email Platform UI Backend**: Handles web application requests
-- **Email API**: Standalone API for programmatic access
-- **Campaign Manager**: Manages email campaign lifecycle
-- **Email Processor**: Processes and sends email batches
-- **Analytics Engine**: Processes delivery and engagement metrics
+### 5. Email Delivery
+- Send Pipeline Step Functions orchestrate email delivery
+- Amazon SES handles actual email sending
+- Recipients receive emails
 
-### Data Layer
-- **DynamoDB**: Single-table design for all application data
-- **S3 Storage**: File storage for templates and assets
-- **OpenSearch Serverless**: Analytics and search capabilities
+### 6. Analytics & Monitoring
+- DynamoDB streams data to OpenSearch for analytics
+- SES events (opens, clicks, bounces) flow to OpenSearch
+- Real-time analytics and reporting available
 
-### Email Service
-- **Amazon SES**: Email delivery service with reputation management
+## Key Benefits
 
-### Message Processing
-- **SQS Email Queue**: Reliable message queuing for email processing
-- **SNS Notification Topic**: Event-driven notifications
+### Separation of Concerns
+- Email Platform operates independently
+- Message Centre focuses on user experience
+- Clear API contracts between systems
 
-### Monitoring
-- **CloudWatch**: Centralized logging and monitoring
+### Scalability
+- Independent scaling of each component
+- Serverless architecture auto-scales with demand
+- Efficient resource utilization
 
-### External Integration
-- **Message Centre**: External reporting integration
-- **Jenkins CI/CD**: Continuous integration and deployment
+### Maintainability
+- Modular architecture
+- Independent deployment cycles
+- Clear service boundaries
 
-## Data Flow Patterns
+### Security
+- Isolated data storage
+- Secure file upload via presigned URLs
+- Comprehensive access controls
 
-### User Request Flow
-1. User accesses platform → CDN → Static content served
-2. API requests → API Gateway → Authentication → Backend services
-
-### Email Processing Flow
-1. Campaign creation → Queue → Asynchronous processing → SES delivery
-2. Delivery events → SNS → Analytics → OpenSearch indexing
-
-### External Integration Flow
-1. External systems → Message Centre → Email Platform API
-2. Cross-platform data sharing and reporting
-
-## Security Considerations
-- All traffic flows through secure HTTPS connections
-- Authentication required at API Gateway level
-- Data encryption at rest and in transit
-- Audit logging through CloudWatch
-
-## Scalability Features
-- CDN for global content delivery
-- Serverless architecture with auto-scaling
-- Queue-based processing for high throughput
-- Managed services for operational efficiency
+## Technology Stack
+- **Frontend**: Angular/TypeScript (Message Centre)
+- **APIs**: Node.js Lambda functions
+- **Storage**: S3, DynamoDB, OpenSearch
+- **Processing**: Step Functions, EventBridge
+- **Email**: Amazon SES
+- **Security**: API Gateway, IAM, KMS

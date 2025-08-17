@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>05_security_architecture_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Security Architecture Flow Description</h1>
+<br/>
+<h2>Overview</h2>
+<p>This diagram illustrates the comprehensive security architecture of the Email Platform, showing multiple layers of protection and authentication mechanisms to ensure secure access and data protection.</p>
+<br/>
+<h2>Security Layers</h2>
+<br/>
+<h3>1. External Protection Layer</h3>
+<ul>
+<li><strong>AWS WAF</strong>: First line of defense against web attacks</li>
+<li><strong>DDoS Protection</strong>: Built-in AWS Shield protection</li>
+<li><strong>Geographic Filtering</strong>: Block requests from specific regions</li>
+<li><strong>Rate Limiting</strong>: Prevent abuse and ensure fair usage</li>
+</ul>
+<br/>
+<h3>2. API Gateway Security</h3>
+<ul>
+<li><strong>Request Validation</strong>: Schema validation and input sanitization</li>
+<li><strong>Throttling</strong>: Per-client and global rate limiting</li>
+<li><strong>CORS Configuration</strong>: Cross-origin request security</li>
+<li><strong>Request/Response Transformation</strong>: Data sanitization</li>
+</ul>
+<br/>
+<h3>3. Authentication Options</h3>
+<br/>
+<h4>API Key Authentication (Mandatory)</h4>
+<ul>
+<li><strong>Purpose</strong>: Basic authentication for all API requests</li>
+<li><strong>Implementation</strong>: X-API-Key header validation</li>
+<li><strong>Management</strong>: Secure key generation, rotation, and revocation</li>
+<li><strong>Validation</strong>: Real-time key validation against active key store</li>
+</ul>
+<br/>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+GET /api/v1/campaigns
+X-API-Key: ak_live_1234567890abcdef
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>OAuth 2.0 (Optional)</h4>
+<ul>
+<li><strong>Purpose</strong>: Enhanced security with user context and scoped access</li>
+<li><strong>Flow</strong>: Authorization Code Grant with PKCE</li>
+<li><strong>Tokens</strong>: JWT access tokens with configurable expiration</li>
+<li><strong>Scopes</strong>: Fine-grained permission control</li>
+</ul>
+<br/>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+GET /api/v1/campaigns
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+X-API-Key: ak_live_1234567890abcdef
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>mTLS (Optional)</h4>
+<ul>
+<li><strong>Purpose</strong>: Mutual authentication for high-security environments</li>
+<li><strong>Implementation</strong>: Client certificate validation</li>
+<li><strong>Certificate Management</strong>: Automated certificate lifecycle</li>
+<li><strong>Use Cases</strong>: Enterprise integrations, high-value transactions</li>
+</ul>
+<br/>
+<h3>4. Service-Level Security</h3>
+<br/>
+<h4>IAM Roles &amp; Policies</h4>
+<ul>
+<li><strong>Service Roles</strong>: Least-privilege access for each service</li>
+<li><strong>Cross-Service Access</strong>: Secure service-to-service communication</li>
+<li><strong>Resource Policies</strong>: Fine-grained resource access control</li>
+<li><strong>Temporary Credentials</strong>: STS-based credential management</li>
+</ul>
+<br/>
+<h4>Secrets Management</h4>
+<ul>
+<li><strong>AWS Secrets Manager</strong>: Secure storage of API keys and secrets</li>
+<li><strong>Automatic Rotation</strong>: Regular secret rotation policies</li>
+<li><strong>Access Logging</strong>: Comprehensive secret access auditing</li>
+<li><strong>Encryption</strong>: Secrets encrypted with customer-managed KMS keys</li>
+</ul>
+<br/>
+<h3>5. Data Protection Layer</h3>
+<br/>
+<h4>Encryption at Rest</h4>
+<ul>
+<li><strong>S3 Buckets</strong>: Server-side encryption with KMS keys</li>
+<li><strong>DynamoDB</strong>: Encryption at rest with customer-managed keys</li>
+<li><strong>OpenSearch</strong>: Domain-level encryption configuration</li>
+<li><strong>Key Management</strong>: Centralized KMS key management</li>
+</ul>
+<br/>
+<h4>Encryption in Transit</h4>
+<ul>
+<li><strong>TLS 1.2+</strong>: All communications encrypted in transit</li>
+<li><strong>Certificate Management</strong>: Automated certificate provisioning</li>
+<li><strong>Perfect Forward Secrecy</strong>: Enhanced connection security</li>
+<li><strong>HSTS Headers</strong>: Force HTTPS connections</li>
+</ul>
+<br/>
+<h2>Security Flow Patterns</h2>
+<br/>
+<h3>1. API Request Security Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Client Request → WAF → API Gateway → Authentication → Authorization → Service
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. Multi-Factor Authentication Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+API Key Validation → OAuth Token Validation → mTLS Certificate Validation → Access Granted
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>3. Service-to-Service Security Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Service A → IAM Role → STS Token → Service B → Resource Access
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>4. Data Access Security Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Request → Authentication → Authorization → KMS Key → Encrypted Data → Decryption → Response
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Authentication Implementation</h2>
+<br/>
+<h3>API Key Management</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// API Key validation
+const validateApiKey = async (apiKey) => {
+  const key = await secretsManager.getSecretValue({
+    SecretId: `api-keys/${apiKey}`
+  }).promise();
+  
+  if (!key || key.status !== 'active') {
+    throw new UnauthorizedError('Invalid API key');
+  }
+  
+  return key.metadata;
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>OAuth 2.0 Implementation</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// JWT token validation
+const validateOAuthToken = async (token) => {
+  const decoded = jwt.verify(token, publicKey, {
+    algorithms: ['RS256'],
+    issuer: 'https://auth.emailplatform.com',
+    audience: 'email-platform-api'
+  });
+  
+  return {
+    userId: decoded.sub,
+    scopes: decoded.scope.split(' '),
+    clientId: decoded.client_id
+  };
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>mTLS Implementation</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Client certificate validation
+const validateClientCertificate = (cert) => {
+  const certificate = new crypto.X509Certificate(cert);
+  
+  // Validate certificate chain
+  if (!certificate.verify(caCertificate)) {
+    throw new UnauthorizedError('Invalid certificate chain');
+  }
+  
+  // Check certificate expiration
+  if (certificate.validTo < new Date()) {
+    throw new UnauthorizedError('Certificate expired');
+  }
+  
+  return certificate.subject;
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Authorization Patterns</h2>
+<br/>
+<h3>Role-Based Access Control (RBAC)</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "roles": {
+    "email_admin": {
+      "permissions": ["campaigns:*", "templates:*", "analytics:read"]
+    },
+    "email_user": {
+      "permissions": ["campaigns:create", "campaigns:read", "templates:read"]
+    },
+    "analytics_viewer": {
+      "permissions": ["analytics:read", "reports:read"]
+    }
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Scope-Based Access Control</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "scopes": {
+    "campaigns:read": "Read campaign data",
+    "campaigns:write": "Create and modify campaigns",
+    "templates:read": "Read email templates",
+    "templates:write": "Create and modify templates",
+    "analytics:read": "Access analytics data"
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Security Monitoring</h2>
+<br/>
+<h3>Access Logging</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "timestamp": "2024-01-01T10:00:00Z",
+  "request_id": "uuid",
+  "client_ip": "192.168.1.100",
+  "user_agent": "EmailClient/1.0",
+  "api_key_id": "ak_1234",
+  "oauth_client_id": "client_5678",
+  "endpoint": "/api/v1/campaigns",
+  "method": "POST",
+  "status_code": 200,
+  "response_time_ms": 150
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Security Events</h3>
+<ul>
+<li><strong>Failed Authentication</strong>: Invalid API keys or tokens</li>
+<li><strong>Suspicious Activity</strong>: Unusual access patterns</li>
+<li><strong>Rate Limit Violations</strong>: Excessive request rates</li>
+<li><strong>Geographic Anomalies</strong>: Requests from unexpected locations</li>
+</ul>
+<br/>
+<h3>Threat Detection</h3>
+<ul>
+<li><strong>AWS GuardDuty</strong>: Intelligent threat detection</li>
+<li><strong>CloudTrail</strong>: API call monitoring and analysis</li>
+<li><strong>VPC Flow Logs</strong>: Network traffic analysis</li>
+<li><strong>Custom Rules</strong>: Business-specific threat patterns</li>
+</ul>
+<br/>
+<h2>Compliance &amp; Governance</h2>
+<br/>
+<h3>Data Privacy Compliance</h3>
+<ul>
+<li><strong>GDPR</strong>: European data protection regulations</li>
+<li><strong>CCPA</strong>: California Consumer Privacy Act</li>
+<li><strong>PIPEDA</strong>: Canadian privacy legislation</li>
+<li><strong>Data Residency</strong>: Geographic data storage requirements</li>
+</ul>
+<br/>
+<h3>Email Compliance</h3>
+<ul>
+<li><strong>CAN-SPAM Act</strong>: US email marketing regulations</li>
+<li><strong>CASL</strong>: Canadian Anti-Spam Legislation</li>
+<li><strong>Australian Spam Act</strong>: Australian email regulations</li>
+<li><strong>GDPR Email Consent</strong>: European consent requirements</li>
+</ul>
+<br/>
+<h3>Security Standards</h3>
+<ul>
+<li><strong>SOC 2 Type II</strong>: Security and availability controls</li>
+<li><strong>ISO 27001</strong>: Information security management</li>
+<li><strong>PCI DSS</strong>: Payment card data security (if applicable)</li>
+<li><strong>HIPAA</strong>: Healthcare data protection (if applicable)</li>
+</ul>
+<br/>
+<h2>Incident Response</h2>
+<br/>
+<h3>Security Incident Classification</h3>
+<ul>
+<li><strong>P1 - Critical</strong>: Data breach, system compromise</li>
+<li><strong>P2 - High</strong>: Authentication bypass, privilege escalation</li>
+<li><strong>P3 - Medium</strong>: Suspicious activity, policy violations</li>
+<li><strong>P4 - Low</strong>: Minor security events, informational alerts</li>
+</ul>
+<br/>
+<h3>Response Procedures</h3>
+<ol>
+<li><strong>Detection</strong>: Automated monitoring and alerting</li>
+<li><strong>Assessment</strong>: Incident severity and impact analysis</li>
+<li><strong>Containment</strong>: Immediate threat mitigation</li>
+<li><strong>Investigation</strong>: Root cause analysis and evidence collection</li>
+<li><strong>Recovery</strong>: System restoration and security hardening</li>
+<li><strong>Lessons Learned</strong>: Process improvement and documentation</li>
+</ol>
+<br/>
+<h3>Communication Plan</h3>
+<ul>
+<li><strong>Internal Notifications</strong>: Security team, management, legal</li>
+<li><strong>Customer Communications</strong>: Transparent incident reporting</li>
+<li><strong>Regulatory Reporting</strong>: Compliance with breach notification laws</li>
+<li><strong>Public Disclosure</strong>: Coordinated vulnerability disclosure</li>
+</ul>
+<br/>
+<h2>Security Best Practices</h2>
+<br/>
+<h3>Development Security</h3>
+<ul>
+<li><strong>Secure Coding</strong>: OWASP guidelines and security reviews</li>
+<li><strong>Dependency Management</strong>: Regular security updates</li>
+<li><strong>Static Analysis</strong>: Automated code security scanning</li>
+<li><strong>Penetration Testing</strong>: Regular security assessments</li>
+</ul>
+<br/>
+<h3>Operational Security</h3>
+<ul>
+<li><strong>Principle of Least Privilege</strong>: Minimal required access</li>
+<li><strong>Defense in Depth</strong>: Multiple security layers</li>
+<li><strong>Regular Audits</strong>: Periodic security reviews</li>
+<li><strong>Security Training</strong>: Team security awareness</li>
+</ul>
+<br/>
+<h3>Data Security</h3>
+<ul>
+<li><strong>Data Classification</strong>: Sensitive data identification</li>
+<li><strong>Data Minimization</strong>: Collect only necessary data</li>
+<li><strong>Data Retention</strong>: Automated data lifecycle management</li>
+<li><strong>Data Anonymization</strong>: Privacy-preserving analytics</li>
+</ul>
+<br/>
+</body>
+</html>

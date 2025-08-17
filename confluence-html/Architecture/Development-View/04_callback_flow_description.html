@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>04_callback_flow_description</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Callback Flow Description</h1>
+<br/>
+<h2>Overview</h2>
+<p>This diagram illustrates the callback mechanism that enables the Email Platform to notify external systems (like Message Centre) about email campaign status changes and delivery events.</p>
+<br/>
+<h2>Callback Flow Components</h2>
+<br/>
+<h3>Message Centre Integration</h3>
+<ul>
+<li><strong>Message Centre API</strong>: Initiates email campaigns with callback URLs</li>
+<li><strong>Customer Webhook</strong>: Receives status updates and delivery notifications</li>
+</ul>
+<br/>
+<h3>Email Platform Services</h3>
+<ul>
+<li><strong>Email API</strong>: Accepts campaign requests with callback configuration</li>
+<li><strong>Callback Service</strong>: Manages webhook notifications and retry logic</li>
+<li><strong>Message Status Storage</strong>: DynamoDB stores callback URLs and delivery status</li>
+</ul>
+<br/>
+<h3>Processing Pipeline</h3>
+<ul>
+<li><strong>Email Sender Step Functions</strong>: Orchestrates email delivery and status updates</li>
+<li><strong>Amazon SES</strong>: Handles email delivery and generates delivery events</li>
+</ul>
+<br/>
+<h2>Detailed Flow Steps</h2>
+<br/>
+<h3>1. Campaign Submission with Callback</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/campaigns
+{
+  "template_id": "uuid",
+  "csv_file_url": "s3://bucket/recipients.csv",
+  "callback_url": "https://messagecentre.com/webhooks/email-status",
+  "callback_events": ["status_change", "delivery_events"]
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. Callback URL Storage</h3>
+<ul>
+<li>Email API stores callback URL with transaction metadata</li>
+<li>Callback configuration includes event types and authentication details</li>
+<li>Validation ensures callback URL is accessible and secure</li>
+</ul>
+<br/>
+<h3>3. Email Processing &amp; Status Updates</h3>
+<ul>
+<li>Step Functions process email campaign</li>
+<li>Each status change triggers callback service</li>
+<li>Status transitions: ACCEPT → PROCESSING → SENT → COMPLETED</li>
+</ul>
+<br/>
+<h3>4. Callback Execution</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST https://messagecentre.com/webhooks/email-status
+Content-Type: application/json
+X-Signature: HMAC-SHA256-signature
+X-Event-Type: status_change
+
+{
+  "transaction_id": "uuid",
+  "event_type": "status_change",
+  "status": "PROCESSING",
+  "timestamp": "2024-01-01T10:00:00Z",
+  "message_count": 1000,
+  "processed_count": 250
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>5. SES Delivery Events</h3>
+<ul>
+<li>Amazon SES generates delivery, bounce, complaint, open, and click events</li>
+<li>Events flow directly to Callback Service via SNS</li>
+<li>Individual message events trigger specific callbacks</li>
+</ul>
+<br/>
+<h3>6. Event-Specific Callbacks</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST https://messagecentre.com/webhooks/email-status
+Content-Type: application/json
+X-Signature: HMAC-SHA256-signature
+X-Event-Type: delivery_event
+
+{
+  "transaction_id": "uuid",
+  "message_id": "uuid",
+  "event_type": "delivered",
+  "recipient": "user@example.com",
+  "timestamp": "2024-01-01T10:05:00Z",
+  "ses_message_id": "ses-uuid"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>7. Final Status Update</h3>
+<ul>
+<li>When all messages are processed, final callback sent</li>
+<li>Includes comprehensive campaign summary</li>
+<li>Updates transaction status to COMPLETED</li>
+</ul>
+<br/>
+<h2>Callback Event Types</h2>
+<br/>
+<h3>Status Change Events</h3>
+<ul>
+<li><strong>ACCEPT</strong>: Campaign accepted for processing</li>
+<li><strong>PROCESSING</strong>: Messages being loaded into system</li>
+<li><strong>SCHEDULED</strong>: All messages scheduled (if applicable)</li>
+<li><strong>SENT</strong>: All messages sent to SES</li>
+<li><strong>COMPLETED</strong>: All messages processed (delivered/bounced)</li>
+</ul>
+<br/>
+<h3>Delivery Events</h3>
+<ul>
+<li><strong>SENT</strong>: Message sent to SES</li>
+<li><strong>DELIVERED</strong>: Message successfully delivered</li>
+<li><strong>BOUNCED</strong>: Message bounced (hard/soft bounce)</li>
+<li><strong>COMPLAINED</strong>: Spam complaint received</li>
+<li><strong>OPENED</strong>: Email opened by recipient</li>
+<li><strong>CLICKED</strong>: Link clicked in email</li>
+</ul>
+<br/>
+<h2>Callback Security</h2>
+<br/>
+<h3>Authentication</h3>
+<ul>
+<li><strong>HMAC Signatures</strong>: Verify callback authenticity</li>
+<li><strong>API Keys</strong>: Optional additional authentication</li>
+<li><strong>IP Whitelisting</strong>: Restrict callback sources</li>
+</ul>
+<br/>
+<h3>Payload Security</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Signature verification
+const signature = crypto
+  .createHmac('sha256', secret)
+  .update(JSON.stringify(payload))
+  .digest('hex');
+
+const expectedSignature = `sha256=${signature}`;
+const receivedSignature = request.headers['x-signature'];
+
+if (expectedSignature !== receivedSignature) {
+  throw new Error('Invalid signature');
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Retry Logic</h3>
+<ul>
+<li><strong>Exponential Backoff</strong>: 1s, 2s, 4s, 8s, 16s intervals</li>
+<li><strong>Maximum Retries</strong>: 5 attempts per callback</li>
+<li><strong>Dead Letter Queue</strong>: Failed callbacks for manual review</li>
+<li><strong>Timeout Handling</strong>: 30-second timeout per attempt</li>
+</ul>
+<br/>
+<h2>Error Handling</h2>
+<br/>
+<h3>Callback Failures</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "error": {
+    "code": "CALLBACK_FAILED",
+    "message": "Webhook endpoint returned 500",
+    "retry_count": 3,
+    "next_retry": "2024-01-01T10:05:00Z",
+    "max_retries": 5
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Endpoint Validation</h3>
+<ul>
+<li><strong>URL Validation</strong>: Ensure HTTPS endpoints</li>
+<li><strong>Response Validation</strong>: Expect 2xx status codes</li>
+<li><strong>Timeout Handling</strong>: 30-second maximum response time</li>
+<li><strong>Rate Limiting</strong>: Respect endpoint rate limits</li>
+</ul>
+<br/>
+<h3>Fallback Mechanisms</h3>
+<ul>
+<li><strong>Email Notifications</strong>: Alert on callback failures</li>
+<li><strong>Dashboard Alerts</strong>: Real-time failure monitoring</li>
+<li><strong>Manual Retry</strong>: Administrative retry capabilities</li>
+<li><strong>Alternative Endpoints</strong>: Backup callback URLs</li>
+</ul>
+<br/>
+<h2>Monitoring &amp; Analytics</h2>
+<br/>
+<h3>Callback Metrics</h3>
+<ul>
+<li><strong>Success Rate</strong>: Percentage of successful callbacks</li>
+<li><strong>Response Time</strong>: Average callback response latency</li>
+<li><strong>Retry Rate</strong>: Frequency of callback retries</li>
+<li><strong>Failure Rate</strong>: Percentage of failed callbacks</li>
+</ul>
+<br/>
+<h3>Dashboard Views</h3>
+<ul>
+<li>Real-time callback status</li>
+<li>Historical callback performance</li>
+<li>Endpoint health monitoring</li>
+<li>Error pattern analysis</li>
+</ul>
+<br/>
+<h3>Alerting</h3>
+<ul>
+<li><strong>High Failure Rate</strong>: Alert when &gt;5% callbacks fail</li>
+<li><strong>Slow Response</strong>: Alert when response time &gt;10s</li>
+<li><strong>Endpoint Down</strong>: Alert when endpoint unreachable</li>
+<li><strong>Retry Exhaustion</strong>: Alert when max retries reached</li>
+</ul>
+<br/>
+<h2>Integration Patterns</h2>
+<br/>
+<h3>Webhook Standards</h3>
+<ul>
+<li><strong>RESTful Design</strong>: Standard HTTP methods and status codes</li>
+<li><strong>JSON Payloads</strong>: Structured, consistent data format</li>
+<li><strong>Idempotency</strong>: Safe to retry identical requests</li>
+<li><strong>Versioning</strong>: API version headers for compatibility</li>
+</ul>
+<br/>
+<h3>Event Ordering</h3>
+<ul>
+<li><strong>Sequence Numbers</strong>: Ensure event ordering</li>
+<li><strong>Timestamps</strong>: UTC timestamps for all events</li>
+<li><strong>Deduplication</strong>: Prevent duplicate event processing</li>
+<li><strong>State Reconciliation</strong>: Handle out-of-order events</li>
+</ul>
+<br/>
+<h3>Scalability Considerations</h3>
+<ul>
+<li><strong>Async Processing</strong>: Non-blocking callback execution</li>
+<li><strong>Batch Callbacks</strong>: Group related events when possible</li>
+<li><strong>Rate Limiting</strong>: Respect downstream system limits</li>
+<li><strong>Circuit Breaker</strong>: Prevent cascade failures</li>
+</ul>
+<br/>
+<h2>Best Practices</h2>
+<br/>
+<h3>Callback URL Design</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+https://api.customer.com/webhooks/email-platform
+├── /status-changes    # Campaign status updates
+├── /delivery-events   # Individual message events
+└── /health           # Health check endpoint
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Payload Design</h3>
+<ul>
+<li><strong>Consistent Schema</strong>: Standardized event structure</li>
+<li><strong>Minimal Data</strong>: Include only necessary information</li>
+<li><strong>Reference IDs</strong>: Use UUIDs for correlation</li>
+<li><strong>Metadata</strong>: Include context for debugging</li>
+</ul>
+<br/>
+<h3>Error Recovery</h3>
+<ul>
+<li><strong>Graceful Degradation</strong>: Continue processing on callback failures</li>
+<li><strong>Manual Intervention</strong>: Admin tools for failed callbacks</li>
+<li><strong>Data Consistency</strong>: Ensure system state remains consistent</li>
+<li><strong>Audit Logging</strong>: Comprehensive callback attempt logging</li>
+</ul>
+<br/>
+</body>
+</html>

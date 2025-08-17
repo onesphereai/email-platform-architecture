@@ -8,12 +8,12 @@
 <!-- Confluence Storage Format -->
 <h1>Email Platform Architecture</h1>
 <br/>
-<p>Comprehensive architecture documentation and diagrams for the Email Platform - a self-service email marketing solution for B2B customers.</p>
+<p>Comprehensive architecture documentation and diagrams for the Email Platform - a standalone email marketing solution with Message Centre integration.</p>
 <br/>
 <h2>📋 Executive Documentation</h2>
 <br/>
 <ul>
-<li><strong><a href="Email<em>Platform</em>Architecture_Documentation.md">Architecture Documentation</a></strong> - Complete technical architecture</li>
+<li><strong><a href="Email<em>Platform</em>Standalone_Architecture.md">Standalone Architecture Documentation</a></strong> - Complete standalone architecture</li>
 <li><strong><a href="Email<em>Platform</em>API_Specification.md">API Specification</a></strong> - REST API documentation</li>
 <li><strong><a href="Email<em>Platform</em>Documentation_Summary.md">Documentation Summary</a></strong> - Executive summary</li>
 </ul>
@@ -67,46 +67,47 @@
 <li>Financial planning and ROI analysis</li>
 </ul>
 <br/>
-<h2>🎨 Quick Reference - Key Diagrams</h2>
+<h2>🎨 Standalone Architecture Diagrams</h2>
 <br/>
 <h3>High-Level Architecture</h3>
 <ul>
-<li><a href="generated-diagrams/16<em>clean</em>high<em>level</em>architecture.png">Clean High Level Architecture</a> | <a href="Architecture/Deployment-View/16<em>clean</em>high<em>level</em>architecture_flow.md">Flow Description</a></li>
-<li><a href="generated-diagrams/01<em>high</em>level<em>architecture.png">Original High Level Architecture</a> | <a href="Architecture/Deployment-View/01</em>high<em>level</em>architecture_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/01<em>high</em>level<em>architecture.png">Standalone High Level Architecture</a> | <a href="Architecture/Deployment-View/01</em>high<em>level</em>architecture_flow.md">Flow Description</a></li>
 </ul>
 <br/>
-<h3>Security &amp; Compliance</h3>
+<h3>Integration &amp; Component Views</h3>
 <ul>
-<li><a href="generated-diagrams/19<em>clean</em>security<em>architecture.png">Clean Security Architecture</a> | <a href="Architecture/Security-View/19</em>clean<em>security</em>architecture_flow.md">Flow Description</a></li>
-<li><a href="generated-diagrams/14<em>authentication</em>sequence.png">Authentication Sequence</a> | <a href="Architecture/Security-View/14<em>authentication</em>sequence_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/02<em>integration</em>flow.png">Integration Flow</a> | <a href="Architecture/Development-View/02<em>integration</em>flow_description.md">Flow Description</a></li>
+<li><a href="generated-diagrams/03<em>detailed</em>component<em>architecture.png">Detailed Component Architecture</a> | <a href="Architecture/Development-View/03</em>detailed<em>component</em>architecture_flow.md">Flow Description</a></li>
 </ul>
 <br/>
-<h3>Data &amp; Multi-Tenancy</h3>
+<h3>Process Flows</h3>
 <ul>
-<li><a href="generated-diagrams/18<em>clean</em>multitenant<em>architecture.png">Clean Multi-Tenant Architecture</a> | <a href="Architecture/Data-View/18</em>clean<em>multitenant</em>architecture_flow.md">Flow Description</a></li>
-<li><a href="generated-diagrams/13<em>email</em>delivery<em>analytics</em>sequence.png">Email Delivery &amp; Analytics</a> | <a href="Architecture/Data-View/13<em>email</em>delivery<em>analytics</em>sequence_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/04<em>callback</em>flow.png">Callback Flow</a> | <a href="Architecture/Development-View/04<em>callback</em>flow_description.md">Flow Description</a></li>
 </ul>
 <br/>
-<h3>Development &amp; APIs</h3>
+<h3>Security Architecture</h3>
 <ul>
-<li><a href="generated-diagrams/12<em>api</em>integration<em>sequence.png">API Integration Sequence</a> | <a href="Architecture/Development-View/12</em>api<em>integration</em>sequence_flow.md">Flow Description</a></li>
-<li><a href="generated-diagrams/10<em>campaign</em>creation<em>sequence.png">Campaign Creation Sequence</a> | <a href="Architecture/Development-View/10</em>campaign<em>creation</em>sequence_flow.md">Flow Description</a></li>
+<li><a href="generated-diagrams/05<em>security</em>architecture.png">Security Architecture</a> | <a href="Architecture/Security-View/05<em>security</em>architecture_flow.md">Flow Description</a></li>
 </ul>
 <br/>
-<h2>🏗️ Architecture Highlights</h2>
-<br/>
+<h3>Data Flow Diagrams</h3>
 <ul>
-<li><strong>Multi-tenant silo model</strong> with complete data isolation</li>
-<li><strong>Serverless architecture</strong> using AWS Lambda, API Gateway, DynamoDB</li>
-<li><strong>Single table design</strong> optimized for DynamoDB access patterns</li>
-<li><strong>Comprehensive security</strong> with multiple authentication methods</li>
-<li><strong>Email authentication</strong> with SPF, DKIM, DMARC</li>
-<li><strong>Real-time analytics</strong> with OpenSearch Serverless</li>
-<li><strong>Scalable processing</strong> with SQS/SNS message queuing</li>
+<li><a href="generated-diagrams/06<em>transaction</em>status<em>flow.png">Transaction Status Flow</a> | <a href="Architecture/Data-View/06</em>transaction<em>status</em>flow_description.md">Flow Description</a></li>
+<li><a href="generated-diagrams/07<em>message</em>status<em>flow.png">Message Status Flow</a> | <a href="Architecture/Data-View/07</em>message<em>status</em>flow_description.md">Flow Description</a></li>
 </ul>
 <br/>
-<h2>🔧 Technology Stack</h2>
+<h2>🏗️ Standalone Architecture Highlights</h2>
 <br/>
+<h3>Key Architectural Decisions</h3>
+<ul>
+<li><strong>Standalone Email Platform</strong>: Independent service with dedicated APIs and storage</li>
+<li><strong>Message Centre Integration</strong>: Wrapper APIs for seamless integration</li>
+<li><strong>Presigned URL Strategy</strong>: Secure file uploads directly to S3</li>
+<li><strong>Hierarchical Data Model</strong>: Transaction → Batch → Message structure</li>
+<li><strong>Event-Driven Processing</strong>: Step Functions and EventBridge orchestration</li>
+</ul>
+<br/>
+<h3>Technology Stack</h3>
 <table>
 <thead>
 <tr>
@@ -119,32 +120,37 @@
 <tr>
 <td>Frontend</td>
 <td>Angular, TypeScript</td>
-<td>User interface</td>
+<td>Message Centre UI</td>
 </tr>
 <tr>
 <td>API Gateway</td>
 <td>AWS API Gateway</td>
-<td>Request routing</td>
+<td>Request routing &amp; security</td>
 </tr>
 <tr>
 <td>Authentication</td>
-<td>AWS Cognito</td>
-<td>SAML SSO</td>
+<td>API Keys, OAuth 2.0, mTLS</td>
+<td>Multi-layer security</td>
 </tr>
 <tr>
 <td>Backend</td>
 <td>Node.js, Lambda</td>
-<td>Business logic</td>
+<td>Serverless processing</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>Step Functions, EventBridge</td>
+<td>Workflow management</td>
 </tr>
 <tr>
 <td>Database</td>
 <td>DynamoDB</td>
-<td>Data storage</td>
+<td>Scalable NoSQL storage</td>
 </tr>
 <tr>
 <td>File Storage</td>
 <td>S3</td>
-<td>Templates and assets</td>
+<td>Templates and CSV files</td>
 </tr>
 <tr>
 <td>Email Service</td>
@@ -152,79 +158,150 @@
 <td>Email delivery</td>
 </tr>
 <tr>
-<td>Message Queue</td>
-<td>SQS, SNS</td>
-<td>Async processing</td>
-</tr>
-<tr>
 <td>Analytics</td>
-<td>OpenSearch</td>
-<td>Search and analytics</td>
+<td>OpenSearch Serverless</td>
+<td>Real-time analytics</td>
 </tr>
 <tr>
 <td>Monitoring</td>
 <td>CloudWatch, X-Ray</td>
 <td>Observability</td>
 </tr>
-<tr>
-<td>CI/CD</td>
-<td>Jenkins, Serverless</td>
-<td>Deployment</td>
-</tr>
 </tbody>
 </table>
 <br/>
+<h3>Processing Pipeline</h3>
+<ol>
+<li><strong>File Upload</strong>: Templates and CSV files via presigned URLs</li>
+<li><strong>File Processing</strong>: Step Functions split CSV into batches and messages</li>
+<li><strong>Scheduling</strong>: Optional EventBridge scheduling for future delivery</li>
+<li><strong>Email Delivery</strong>: Step Functions orchestrate SES email sending</li>
+<li><strong>Status Tracking</strong>: Real-time status updates and callback notifications</li>
+<li><strong>Analytics</strong>: OpenSearch for engagement tracking and reporting</li>
+</ol>
+<br/>
+<h3>Data Architecture</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Transaction (Campaign Level)
+├── Status: ACCEPT → PROCESSING → SCHEDULED/READY_TO_SEND → SENT → COMPLETED
+├── Batch 1 (File Chunk)
+│   ├── Message 1 (Individual Email)
+│   ├── Message 2 (Individual Email)
+│   └── ...
+├── Batch 2 (File Chunk)
+│   └── ...
+└── Analytics Data (OpenSearch)
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Security Features</h3>
+<ul>
+<li><strong>Multi-layer Authentication</strong>: API Keys (mandatory), OAuth 2.0 (optional), mTLS (optional)</li>
+<li><strong>Data Encryption</strong>: At rest and in transit with KMS</li>
+<li><strong>Access Control</strong>: IAM roles and fine-grained permissions</li>
+<li><strong>Compliance</strong>: GDPR, CCPA, CAN-SPAM, Australian Spam Act</li>
+</ul>
+<br/>
 <h2>📊 Implementation Phases</h2>
 <br/>
-<h3>Phase 1: MVP (Q1 2024)</h3>
+<h3>Phase 1: Core Standalone Platform (Q1 2024)</h3>
 <ul>
-<li>Basic campaign creation and sending</li>
-<li>Simple drag-and-drop builder</li>
-<li>SAML authentication</li>
-<li>Basic reporting</li>
+<li>Standalone Email API development</li>
+<li>File processing pipeline with Step Functions</li>
+<li>Basic template management via presigned URLs</li>
+<li>Transaction and message status tracking</li>
 </ul>
 <br/>
-<h3>Phase 2: Enhanced Features (Q2 2024)</h3>
+<h3>Phase 2: Enhanced Integration (Q2 2024)</h3>
 <ul>
-<li>Advanced template management</li>
-<li>A/B testing capabilities</li>
-<li>Enhanced analytics</li>
-<li>API access</li>
+<li>Message Centre wrapper API integration</li>
+<li>Scheduling capabilities with EventBridge</li>
+<li>Callback system for status notifications</li>
+<li>Enhanced security with multiple auth methods</li>
 </ul>
 <br/>
-<h3>Phase 3: Enterprise Features (Q3 2024)</h3>
+<h3>Phase 3: Advanced Features (Q3 2024)</h3>
 <ul>
-<li>Marketing automation</li>
-<li>Advanced segmentation</li>
-<li>CRM integrations</li>
-<li>Multi-brand support</li>
+<li>Real-time analytics with OpenSearch</li>
+<li>Advanced error handling and retry logic</li>
+<li>Performance optimization and scaling</li>
+<li>Comprehensive monitoring and alerting</li>
 </ul>
 <br/>
-<h3>Phase 4: AI and Advanced Analytics (Q4 2024)</h3>
+<h3>Phase 4: Enterprise Features (Q4 2024)</h3>
 <ul>
-<li>AI-powered optimization</li>
-<li>Advanced personalization</li>
-<li>Cross-channel orchestration</li>
-<li>Enterprise governance</li>
+<li>AI-powered optimization and insights</li>
+<li>Advanced personalization capabilities</li>
+<li>Multi-region deployment</li>
+<li>Enterprise governance and compliance</li>
 </ul>
 <br/>
 <h2>🔒 Compliance &amp; Security</h2>
 <br/>
+<h3>Email Compliance</h3>
 <ul>
-<li><strong>GDPR, CCPA compliance</strong> with data sovereignty</li>
-<li><strong>Email standards compliance</strong> (CAN-SPAM, Australian Spam Act)</li>
-<li><strong>Enterprise security</strong> with encryption at rest and in transit</li>
-<li><strong>Comprehensive monitoring</strong> with audit trails</li>
-<li><strong>Rate limiting and throttling</strong> for abuse prevention</li>
+<li><strong>CAN-SPAM Act</strong>: US email marketing regulations</li>
+<li><strong>GDPR</strong>: European data protection compliance</li>
+<li><strong>CCPA</strong>: California privacy compliance</li>
+<li><strong>Australian Spam Act</strong>: Australian email regulations</li>
+<li><strong>CASL</strong>: Canadian Anti-Spam Legislation</li>
 </ul>
+<br/>
+<h3>Security Standards</h3>
+<ul>
+<li><strong>SOC 2 Type II</strong>: Security and availability controls</li>
+<li><strong>ISO 27001</strong>: Information security management</li>
+<li><strong>Multi-layer Security</strong>: WAF, API Gateway, IAM, KMS</li>
+<li><strong>Audit Logging</strong>: Comprehensive access and activity logs</li>
+</ul>
+<br/>
+<h3>Data Protection</h3>
+<ul>
+<li><strong>Encryption</strong>: AES-256 encryption at rest and TLS 1.2+ in transit</li>
+<li><strong>Access Control</strong>: Role-based and scope-based permissions</li>
+<li><strong>Data Isolation</strong>: Multi-tenant data separation</li>
+<li><strong>Backup &amp; Recovery</strong>: Automated backup with point-in-time recovery</li>
+</ul>
+<br/>
+<h2>🔧 Development Tools</h2>
+<br/>
+<h3>Documentation Generation</h3>
+<ul>
+<li><strong>Confluence HTML</strong>: Run <code>python3 md<em>to</em>confluence.py</code> to generate Confluence-ready HTML files</li>
+<li><strong>Diagram Generation</strong>: AWS architecture diagrams using Python diagrams package</li>
+<li><strong>Version Control</strong>: Git-based documentation versioning</li>
+</ul>
+<br/>
+<h3>Repository Structure</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+├── Email_Platform_Standalone_Architecture.md    # Main architecture doc
+├── Email_Platform_API_Specification.md          # API documentation
+├── Email_Platform_Documentation_Summary.md      # Executive summary
+├── README.md                                     # This file
+├── generated-diagrams/                          # Architecture diagrams (01-07)
+├── Architecture/                                # Detailed architecture views
+│   ├── Development-View/                       # Development architecture
+│   ├── Deployment-View/                        # Infrastructure architecture
+│   ├── Security-View/                          # Security architecture
+│   ├── Data-View/                              # Data architecture
+│   └── Cost-View/                              # Cost analysis
+├── confluence-html/                            # Confluence-ready HTML files
+└── md_to_confluence.py                         # HTML conversion script
+]]></ac:plain-text-body>
+</ac:structured-macro>
 <br/>
 <h2>📞 Support</h2>
 <br/>
 <p>For questions about this architecture:</p>
 <ul>
-<li><strong>Technical Documentation</strong>: See individual markdown files</li>
-<li><strong>Architecture Questions</strong>: Contact the development team</li>
-<li><strong>Implementation Support</strong>: Refer to the API specification</li>
+<li><strong>Technical Documentation</strong>: See individual markdown files in Architecture/ folders</li>
+<li><strong>Standalone Architecture</strong>: Refer to Email<em>Platform</em>Standalone_Architecture.md</li>
+<li><strong>API Integration</strong>: Contact the development team for integration support</li>
+<li><strong>Security Questions</strong>: Refer to Security View documentation</li>
 </ul>
 <br/>
 <h2>📄 License</h2>
@@ -233,9 +310,10 @@
 <br/>
 <hr/>
 <br/>
-<p><strong>Generated</strong>: Thu Aug 14 12:46:15 AEST 2025</p>
-<p><strong>Version</strong>: 1.0.0</p>
-<p><strong>Last Updated</strong>: Thu Aug 14 12:46:15 AEST 2025</p>
+<p><strong>Generated</strong>: August 17, 2024  </p>
+<p><strong>Version</strong>: 2.0.0 (Standalone Architecture - Cleaned)  </p>
+<p><strong>Last Updated</strong>: August 17, 2024  </p>
+<p><strong>Architecture Type</strong>: Standalone Email Platform with Message Centre Integration</p>
 <br/>
 </body>
 </html>

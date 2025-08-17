@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>07_message_status_flow_description</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Message Status Flow Description</h1>
+<br/>
+<h2>Overview</h2>
+<p>This diagram illustrates the detailed status transitions for individual email messages within the Email Platform, showing the complete lifecycle from creation through final engagement tracking.</p>
+<br/>
+<h2>Message Status Categories</h2>
+<br/>
+<h3>Creation States</h3>
+<p>Messages begin their lifecycle when created from CSV processing.</p>
+<br/>
+<h3>Scheduling States</h3>
+<p>Messages can be scheduled for future delivery or marked for immediate processing.</p>
+<br/>
+<h3>Delivery States</h3>
+<p>Messages progress through various delivery states as they are processed by Amazon SES.</p>
+<br/>
+<h3>Final States</h3>
+<p>Messages reach terminal states based on delivery outcomes.</p>
+<br/>
+<h3>Engagement States</h3>
+<p>Successfully delivered messages can generate engagement events.</p>
+<br/>
+<h2>Detailed Status Transitions</h2>
+<br/>
+<h3>1. CREATED - Message Record Created</h3>
+<ul>
+<li><strong>Trigger</strong>: CSV file processing creates individual message records</li>
+<li><strong>Description</strong>: Message record stored in DynamoDB with recipient data</li>
+<li><strong>Data Stored</strong>:</li>
+<ul>
+<li>Message ID, Batch ID, Transaction ID</li>
+<li>Recipient email address</li>
+<li>Placeholder data for template substitution</li>
+<li>Initial timestamp</li>
+</ul>
+<li><strong>Next States</strong>: SCHEDULED or READY<em>TO</em>SEND</li>
+</ul>
+<br/>
+<h3>2. SCHEDULED - Message Scheduled (Conditional Path)</h3>
+<ul>
+<li><strong>Trigger</strong>: Campaign has scheduling configuration</li>
+<li><strong>Description</strong>: Message scheduled for future delivery via EventBridge</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>EventBridge scheduled event created</li>
+<li>Scheduled time stored with message</li>
+<li>Message marked as SCHEDULED</li>
+</ul>
+<li><strong>Next State</strong>: READY<em>TO</em>SEND (when schedule triggers)</li>
+</ul>
+<br/>
+<h3>3. READY_TO_SEND - Ready for Processing (Direct or Scheduled Path)</h3>
+<ul>
+<li><strong>Trigger</strong>: Either immediate processing or scheduled time arrival</li>
+<li><strong>Description</strong>: Message ready for email delivery processing</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>Message queued for sending</li>
+<li>Template and placeholder data prepared</li>
+<li>SES sending parameters configured</li>
+</ul>
+<li><strong>Next State</strong>: SENDING</li>
+</ul>
+<br/>
+<h3>4. SENDING - Being Processed by SES</h3>
+<ul>
+<li><strong>Trigger</strong>: Send pipeline Step Functions processing message</li>
+<li><strong>Description</strong>: Message actively being processed by Amazon SES</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>Template rendering with placeholder data</li>
+<li>Email composition and validation</li>
+<li>SES API call initiated</li>
+</ul>
+<li><strong>Next State</strong>: SENT</li>
+</ul>
+<br/>
+<h3>5. SENT - Sent to SES</h3>
+<ul>
+<li><strong>Trigger</strong>: SES accepts message for delivery</li>
+<li><strong>Description</strong>: Message successfully submitted to SES for delivery</li>
+<li><strong>Data Stored</strong>:</li>
+<ul>
+<li>SES Message ID</li>
+<li>Sent timestamp</li>
+<li>SES response metadata</li>
+</ul>
+<li><strong>Next States</strong>: DELIVERED, BOUNCED, or COMPLAINED</li>
+</ul>
+<br/>
+<h3>6. DELIVERED - Successfully Delivered</h3>
+<ul>
+<li><strong>Trigger</strong>: SES delivery notification received</li>
+<li><strong>Description</strong>: Message successfully delivered to recipient&#x27;s mailbox</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>Delivery timestamp recorded</li>
+<li>Success metrics updated</li>
+<li>Analytics data updated</li>
+</ul>
+<li><strong>Next States</strong>: OPENED (optional)</li>
+</ul>
+<br/>
+<h3>7. BOUNCED - Delivery Failed</h3>
+<ul>
+<li><strong>Trigger</strong>: SES bounce notification received</li>
+<li><strong>Description</strong>: Message delivery failed (hard or soft bounce)</li>
+<li><strong>Data Stored</strong>:</li>
+<ul>
+<li>Bounce type (hard/soft)</li>
+<li>Bounce reason</li>
+<li>Bounce timestamp</li>
+<li>Diagnostic information</li>
+</ul>
+<li><strong>Terminal State</strong>: No further transitions</li>
+</ul>
+<br/>
+<h3>8. COMPLAINED - Spam Complaint</h3>
+<ul>
+<li><strong>Trigger</strong>: SES complaint notification received</li>
+<li><strong>Description</strong>: Recipient marked message as spam</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>Complaint timestamp recorded</li>
+<li>Recipient suppression list updated</li>
+<li>Compliance metrics updated</li>
+</ul>
+<li><strong>Terminal State</strong>: No further transitions</li>
+</ul>
+<br/>
+<h3>9. OPENED - Email Opened</h3>
+<ul>
+<li><strong>Trigger</strong>: SES open tracking notification</li>
+<li><strong>Description</strong>: Recipient opened the email</li>
+<li><strong>Data Stored</strong>:</li>
+<ul>
+<li>Open timestamp</li>
+<li>User agent information</li>
+<li>IP address (if available)</li>
+</ul>
+<li><strong>Next State</strong>: CLICKED (optional)</li>
+</ul>
+<br/>
+<h3>10. CLICKED - Link Clicked</h3>
+<ul>
+<li><strong>Trigger</strong>: SES click tracking notification</li>
+<li><strong>Description</strong>: Recipient clicked a link in the email</li>
+<li><strong>Data Stored</strong>:</li>
+<ul>
+<li>Click timestamp</li>
+<li>Clicked URL</li>
+<li>User agent information</li>
+<li>IP address (if available)</li>
+</ul>
+<li><strong>Terminal State</strong>: Final engagement event</li>
+</ul>
+<br/>
+<h2>Data Model Structure</h2>
+<br/>
+<h3>Message Record Schema</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "PK": "BATCH#batch_id",
+  "SK": "MESSAGE#message_id",
+  "message_id": "uuid",
+  "batch_id": "uuid",
+  "transaction_id": "uuid",
+  "recipient_email": "user@example.com",
+  "placeholder_data": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "company": "ACME Corp"
+  },
+  "status": "DELIVERED",
+  "ses_message_id": "ses-uuid",
+  "scheduled_time": "2024-01-01T10:00:00Z",
+  "sent_time": "2024-01-01T10:05:00Z",
+  "delivered_time": "2024-01-01T10:06:00Z",
+  "created_at": "2024-01-01T09:00:00Z",
+  "updated_at": "2024-01-01T10:06:00Z"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Status History Tracking</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "status_history": [
+    {
+      "status": "CREATED",
+      "timestamp": "2024-01-01T09:00:00Z",
+      "metadata": { "source": "csv_processing" }
+    },
+    {
+      "status": "READY_TO_SEND",
+      "timestamp": "2024-01-01T10:00:00Z",
+      "metadata": { "trigger": "immediate" }
+    },
+    {
+      "status": "SENT",
+      "timestamp": "2024-01-01T10:05:00Z",
+      "metadata": { "ses_message_id": "ses-uuid" }
+    },
+    {
+      "status": "DELIVERED",
+      "timestamp": "2024-01-01T10:06:00Z",
+      "metadata": { "delivery_delay_ms": 60000 }
+    }
+  ]
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>SES Event Integration</h2>
+<br/>
+<h3>Event Processing Pipeline</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// SES event handler for status updates
+const handleSESEvent = async (event) => {
+  const { eventType, mail, delivery, bounce, complaint } = event;
+  const messageId = mail.commonHeaders.messageId;
+  
+  switch (eventType) {
+    case 'delivery':
+      await updateMessageStatus(messageId, 'DELIVERED', {
+        delivered_time: delivery.timestamp,
+        processing_time_ms: delivery.processingTimeMillis
+      });
+      break;
+      
+    case 'bounce':
+      await updateMessageStatus(messageId, 'BOUNCED', {
+        bounce_type: bounce.bounceType,
+        bounce_subtype: bounce.bounceSubType,
+        bounce_reason: bounce.bouncedRecipients[0].diagnosticCode
+      });
+      break;
+      
+    case 'complaint':
+      await updateMessageStatus(messageId, 'COMPLAINED', {
+        complaint_type: complaint.complaintFeedbackType,
+        complaint_time: complaint.timestamp
+      });
+      break;
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Engagement Tracking</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Open and click tracking
+const handleEngagementEvent = async (event) => {
+  const { eventType, messageId, timestamp, metadata } = event;
+  
+  if (eventType === 'open') {
+    await updateMessageStatus(messageId, 'OPENED', {
+      opened_time: timestamp,
+      user_agent: metadata.userAgent,
+      ip_address: metadata.ipAddress
+    });
+  } else if (eventType === 'click') {
+    await updateMessageStatus(messageId, 'CLICKED', {
+      clicked_time: timestamp,
+      clicked_url: metadata.url,
+      user_agent: metadata.userAgent,
+      ip_address: metadata.ipAddress
+    });
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Analytics Integration</h2>
+<br/>
+<h3>OpenSearch Data Structure</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "message_id": "uuid",
+  "transaction_id": "uuid",
+  "batch_id": "uuid",
+  "recipient_email": "user@example.com",
+  "status": "DELIVERED",
+  "event_type": "delivery",
+  "timestamp": "2024-01-01T10:06:00Z",
+  "metadata": {
+    "processing_time_ms": 60000,
+    "delivery_delay_ms": 1000,
+    "ses_message_id": "ses-uuid"
+  },
+  "engagement": {
+    "opened": true,
+    "opened_time": "2024-01-01T11:00:00Z",
+    "clicked": false
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Real-time Analytics Queries</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Message status aggregation
+const getMessageStatistics = async (transactionId) => {
+  const query = {
+    query: {
+      term: { transaction_id: transactionId }
+    },
+    aggs: {
+      status_breakdown: {
+        terms: { field: 'status' }
+      },
+      engagement_stats: {
+        filters: {
+          filters: {
+            opened: { term: { 'engagement.opened': true } },
+            clicked: { term: { 'engagement.clicked': true } }
+          }
+        }
+      }
+    }
+  };
+  
+  return await opensearch.search({ index: 'email-events', body: query });
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Performance Monitoring</h2>
+<br/>
+<h3>Status Transition Metrics</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// CloudWatch metrics for message processing
+const publishMessageMetrics = async (status, processingTime) => {
+  await cloudwatch.putMetricData({
+    Namespace: 'EmailPlatform/Messages',
+    MetricData: [
+      {
+        MetricName: 'MessageStatusTransition',
+        Dimensions: [{ Name: 'Status', Value: status }],
+        Value: 1,
+        Unit: 'Count'
+      },
+      {
+        MetricName: 'ProcessingTime',
+        Dimensions: [{ Name: 'Status', Value: status }],
+        Value: processingTime,
+        Unit: 'Milliseconds'
+      }
+    ]
+  }).promise();
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Performance Benchmarks</h3>
+<ul>
+<li><strong>Processing Speed</strong>: Messages processed per second</li>
+<li><strong>Delivery Rate</strong>: Percentage of messages reaching DELIVERED status</li>
+<li><strong>Engagement Rate</strong>: Percentage of delivered messages opened/clicked</li>
+<li><strong>Error Rate</strong>: Percentage of messages reaching BOUNCED/COMPLAINED status</li>
+</ul>
+<br/>
+<h2>Error Handling &amp; Recovery</h2>
+<br/>
+<h3>Bounce Handling</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Bounce classification and handling
+const handleBounce = async (messageId, bounceData) => {
+  const { bounceType, bounceSubType } = bounceData;
+  
+  if (bounceType === 'Permanent') {
+    // Add to suppression list
+    await addToSuppressionList(bounceData.recipient);
+    await updateMessageStatus(messageId, 'BOUNCED', {
+      bounce_type: 'hard',
+      suppressed: true
+    });
+  } else {
+    // Soft bounce - potential retry
+    await updateMessageStatus(messageId, 'BOUNCED', {
+      bounce_type: 'soft',
+      retry_eligible: true
+    });
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Retry Logic</h3>
+<ul>
+<li><strong>Soft Bounces</strong>: Automatic retry after delay</li>
+<li><strong>Transient Failures</strong>: Exponential backoff retry</li>
+<li><strong>Rate Limiting</strong>: Respect SES sending limits</li>
+<li><strong>Dead Letter Queue</strong>: Failed messages for manual review</li>
+</ul>
+<br/>
+<h2>Compliance &amp; Reporting</h2>
+<br/>
+<h3>Suppression List Management</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Automatic suppression list updates
+const updateSuppressionList = async (email, reason) => {
+  await dynamodb.putItem({
+    TableName: 'SuppressionList',
+    Item: {
+      email: { S: email },
+      reason: { S: reason },
+      added_date: { S: new Date().toISOString() },
+      status: { S: 'active' }
+    }
+  }).promise();
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Compliance Reporting</h3>
+<ul>
+<li><strong>Bounce Rate Monitoring</strong>: Track bounce rates by domain</li>
+<li><strong>Complaint Rate Tracking</strong>: Monitor spam complaint rates</li>
+<li><strong>Suppression List Maintenance</strong>: Automatic list updates</li>
+<li><strong>Delivery Quality Metrics</strong>: SES reputation monitoring</li>
+</ul>
+<br/>
+<h2>Integration Patterns</h2>
+<br/>
+<h3>Real-time Status Updates</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// WebSocket notifications for real-time updates
+const notifyStatusChange = async (messageId, status) => {
+  const notification = {
+    message_id: messageId,
+    status: status,
+    timestamp: new Date().toISOString()
+  };
+  
+  await websocket.broadcast('message-status-update', notification);
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Batch Status Processing</h3>
+<ul>
+<li><strong>Bulk Updates</strong>: Efficient batch status updates</li>
+<li><strong>Stream Processing</strong>: Real-time event stream processing</li>
+<li><strong>Aggregation</strong>: Roll-up statistics for transaction-level reporting</li>
+<li><strong>Caching</strong>: Cache frequently accessed status information</li>
+</ul>
+<br/>
+</body>
+</html>

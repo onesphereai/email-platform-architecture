@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>03_detailed_component_architecture_flow</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Detailed Component Architecture Flow</h1>
+<br/>
+<h2>Overview</h2>
+<p>This diagram provides a comprehensive view of all components within the Email Platform, showing the detailed service architecture, data flow, and component interactions.</p>
+<br/>
+<h2>Component Layers</h2>
+<br/>
+<h3>API Gateway Layer</h3>
+<ul>
+<li><strong>API Gateway</strong>: Central entry point for all external requests</li>
+<li><strong>Authentication</strong>: Cognito-based authentication and authorization</li>
+<li><strong>Security</strong>: Request validation, rate limiting, and access control</li>
+</ul>
+<br/>
+<h3>Email Platform Services</h3>
+<br/>
+<h4>Template Management Services</h4>
+<ul>
+<li><strong>Template Service</strong>: Manages email template CRUD operations</li>
+<li><strong>Presigned URL Service</strong>: Generates secure URLs for file uploads</li>
+<li><strong>Functions</strong>: Template validation, version control, metadata management</li>
+</ul>
+<br/>
+<h4>Email Processing Services</h4>
+<ul>
+<li><strong>Email API</strong>: Core email campaign processing service</li>
+<li><strong>Status Service</strong>: Real-time status tracking and reporting</li>
+<li><strong>Callback Service</strong>: Webhook notifications to external systems</li>
+<li><strong>Functions</strong>: Campaign orchestration, status aggregation, notification delivery</li>
+</ul>
+<br/>
+<h3>Processing Pipeline</h3>
+<br/>
+<h4>Step Functions Workflows</h4>
+<ul>
+<li><strong>File Splitter</strong>: Processes CSV files and creates message batches</li>
+<li><strong>Scheduler</strong>: Manages scheduled email delivery timing</li>
+<li><strong>Email Sender</strong>: Orchestrates email delivery through SES</li>
+<li><strong>Functions</strong>: Parallel processing, error handling, retry logic</li>
+</ul>
+<br/>
+<h4>Event Management</h4>
+<ul>
+<li><strong>EventBridge</strong>: Scheduled event management and routing</li>
+<li><strong>SNS</strong>: Notification distribution and fan-out patterns</li>
+<li><strong>SQS</strong>: Message queuing and processing buffers</li>
+<li><strong>Functions</strong>: Event routing, message durability, load balancing</li>
+</ul>
+<br/>
+<h3>Storage &amp; Data Layer</h3>
+<br/>
+<h4>File Storage</h4>
+<ul>
+<li><strong>Templates Bucket</strong>: Secure storage for email templates</li>
+<li><strong>CSV Bucket</strong>: Temporary storage for recipient data files</li>
+<li><strong>Features</strong>: Versioning, encryption, lifecycle policies</li>
+</ul>
+<br/>
+<h4>DynamoDB Tables</h4>
+<ul>
+<li><strong>Transactions</strong>: Campaign-level metadata and status</li>
+<li><strong>Batches</strong>: File processing batch information</li>
+<li><strong>Messages</strong>: Individual email message records</li>
+<li><strong>Design</strong>: Single-table design with efficient access patterns</li>
+</ul>
+<br/>
+<h4>Analytics Engine</h4>
+<ul>
+<li><strong>OpenSearch</strong>: Real-time analytics and search capabilities</li>
+<li><strong>Features</strong>: Full-text search, aggregations, dashboards</li>
+</ul>
+<br/>
+<h3>Email Delivery Layer</h3>
+<ul>
+<li><strong>Amazon SES</strong>: Email delivery service</li>
+<li><strong>SES Events</strong>: Delivery notifications via SNS</li>
+<li><strong>Features</strong>: Reputation management, bounce handling, compliance</li>
+</ul>
+<br/>
+<h2>Data Flow Patterns</h2>
+<br/>
+<h3>1. Template Upload Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Users → API Gateway → Auth → Template Service → S3 Templates
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. Campaign Creation Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Users → API Gateway → Auth → Email API → File Splitter → DynamoDB Tables
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>3. Scheduled Delivery Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+File Splitter → Scheduler → EventBridge → Email Sender → SES
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>4. Real-time Delivery Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+DynamoDB → Email Sender → SES → Recipients
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>5. Analytics Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+SES Events → SNS → OpenSearch
+DynamoDB → OpenSearch (via streams)
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>6. Status Tracking Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Status Service → DynamoDB → Real-time status updates
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>7. Callback Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Email Sender → Callback Service → External Webhooks
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Service Interactions</h2>
+<br/>
+<h3>Synchronous Interactions</h3>
+<ul>
+<li>API Gateway ↔ Lambda Services</li>
+<li>Lambda Services ↔ DynamoDB</li>
+<li>Status Service ↔ Real-time queries</li>
+</ul>
+<br/>
+<h3>Asynchronous Interactions</h3>
+<ul>
+<li>Step Functions ↔ Lambda Services</li>
+<li>DynamoDB Streams → Analytics</li>
+<li>SES Events → Notifications</li>
+</ul>
+<br/>
+<h3>Event-Driven Interactions</h3>
+<ul>
+<li>EventBridge → Scheduled processing</li>
+<li>SNS → Fan-out notifications</li>
+<li>SQS → Buffered processing</li>
+</ul>
+<br/>
+<h2>Scalability Patterns</h2>
+<br/>
+<h3>Horizontal Scaling</h3>
+<ul>
+<li><strong>Lambda Functions</strong>: Auto-scaling based on demand</li>
+<li><strong>API Gateway</strong>: Built-in scalability</li>
+<li><strong>DynamoDB</strong>: On-demand capacity scaling</li>
+<li><strong>Step Functions</strong>: Parallel execution scaling</li>
+</ul>
+<br/>
+<h3>Vertical Scaling</h3>
+<ul>
+<li><strong>Lambda Memory</strong>: Configurable per function</li>
+<li><strong>DynamoDB Capacity</strong>: Adjustable read/write units</li>
+<li><strong>OpenSearch</strong>: Instance type optimization</li>
+</ul>
+<br/>
+<h3>Load Distribution</h3>
+<ul>
+<li><strong>API Gateway</strong>: Request distribution</li>
+<li><strong>Step Functions</strong>: Parallel batch processing</li>
+<li><strong>SQS</strong>: Load leveling and buffering</li>
+<li><strong>DynamoDB</strong>: Partition key distribution</li>
+</ul>
+<br/>
+<h2>Fault Tolerance</h2>
+<br/>
+<h3>Error Handling</h3>
+<ul>
+<li><strong>Lambda</strong>: Dead letter queues for failed executions</li>
+<li><strong>Step Functions</strong>: Retry and catch mechanisms</li>
+<li><strong>SES</strong>: Bounce and complaint handling</li>
+<li><strong>API Gateway</strong>: Circuit breaker patterns</li>
+</ul>
+<br/>
+<h3>Data Durability</h3>
+<ul>
+<li><strong>DynamoDB</strong>: Multi-AZ replication</li>
+<li><strong>S3</strong>: 99.999999999% durability</li>
+<li><strong>OpenSearch</strong>: Cluster redundancy</li>
+<li><strong>Step Functions</strong>: State persistence</li>
+</ul>
+<br/>
+<h3>Recovery Mechanisms</h3>
+<ul>
+<li><strong>Automatic Retries</strong>: Exponential backoff strategies</li>
+<li><strong>Dead Letter Queues</strong>: Failed message handling</li>
+<li><strong>Health Checks</strong>: Service availability monitoring</li>
+<li><strong>Rollback Procedures</strong>: State recovery mechanisms</li>
+</ul>
+<br/>
+<h2>Security Architecture</h2>
+<br/>
+<h3>Authentication &amp; Authorization</h3>
+<ul>
+<li><strong>API Gateway</strong>: Request authentication</li>
+<li><strong>IAM Roles</strong>: Service-to-service authorization</li>
+<li><strong>Cognito</strong>: User identity management</li>
+<li><strong>Resource Policies</strong>: Fine-grained access control</li>
+</ul>
+<br/>
+<h3>Data Protection</h3>
+<ul>
+<li><strong>Encryption at Rest</strong>: KMS-managed keys</li>
+<li><strong>Encryption in Transit</strong>: TLS 1.2+</li>
+<li><strong>Access Logging</strong>: CloudTrail integration</li>
+<li><strong>Data Isolation</strong>: Multi-tenant separation</li>
+</ul>
+<br/>
+<h3>Network Security</h3>
+<ul>
+<li><strong>VPC</strong>: Network isolation</li>
+<li><strong>Security Groups</strong>: Traffic filtering</li>
+<li><strong>WAF</strong>: Application-layer protection</li>
+<li><strong>Private Endpoints</strong>: Secure service communication</li>
+</ul>
+<br/>
+<h2>Monitoring &amp; Observability</h2>
+<br/>
+<h3>Metrics Collection</h3>
+<ul>
+<li><strong>CloudWatch</strong>: Service metrics and logs</li>
+<li><strong>X-Ray</strong>: Distributed tracing</li>
+<li><strong>Custom Metrics</strong>: Business KPIs</li>
+<li><strong>Real-time Dashboards</strong>: Operational visibility</li>
+</ul>
+<br/>
+<h3>Alerting</h3>
+<ul>
+<li><strong>CloudWatch Alarms</strong>: Threshold-based alerts</li>
+<li><strong>SNS Notifications</strong>: Alert distribution</li>
+<li><strong>PagerDuty Integration</strong>: Incident management</li>
+<li><strong>Escalation Procedures</strong>: Response workflows</li>
+</ul>
+<br/>
+<h3>Performance Monitoring</h3>
+<ul>
+<li><strong>Latency Tracking</strong>: End-to-end timing</li>
+<li><strong>Throughput Monitoring</strong>: Request rates</li>
+<li><strong>Error Rate Analysis</strong>: Failure patterns</li>
+<li><strong>Capacity Planning</strong>: Resource utilization</li>
+</ul>
+<br/>
+</body>
+</html>

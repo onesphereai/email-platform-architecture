@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>06_transaction_status_flow_description</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Transaction Status Flow Description</h1>
+<br/>
+<h2>Overview</h2>
+<p>This diagram illustrates the high-level status transitions for email campaign transactions, showing how campaigns progress from initial acceptance through completion.</p>
+<br/>
+<h2>Transaction Status States</h2>
+<br/>
+<h3>1. ACCEPT - Transaction Created</h3>
+<ul>
+<li><strong>Trigger</strong>: Email campaign submitted to Email Platform API</li>
+<li><strong>Description</strong>: Transaction record created with initial metadata</li>
+<li><strong>Data Stored</strong>: Transaction ID, template ID, callback URL, total message count</li>
+<li><strong>Next State</strong>: PROCESSING</li>
+</ul>
+<br/>
+<h3>2. PROCESSING - Loading to DynamoDB</h3>
+<ul>
+<li><strong>Trigger</strong>: File processing Step Functions initiated</li>
+<li><strong>Description</strong>: CSV file being split and individual messages created</li>
+<li><strong>Activities</strong>: </li>
+<ul>
+<li>CSV file validation and parsing</li>
+<li>Message record creation in DynamoDB</li>
+<li>Batch creation for parallel processing</li>
+<li>Placeholder data validation</li>
+</ul>
+<li><strong>Next State</strong>: SCHEDULED or READY<em>TO</em>SEND</li>
+</ul>
+<br/>
+<h3>3. SCHEDULED - All Messages Scheduled (Conditional)</h3>
+<ul>
+<li><strong>Trigger</strong>: Scheduling enabled and all messages have scheduled times</li>
+<li><strong>Description</strong>: All messages scheduled for future delivery via EventBridge</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>EventBridge scheduler events created</li>
+<li>Message status set to SCHEDULED</li>
+<li>Transaction marked as SCHEDULED</li>
+</ul>
+<li><strong>Next State</strong>: READY<em>TO</em>SEND (when schedule triggers)</li>
+</ul>
+<br/>
+<h3>4. READY_TO_SEND - Ready for Delivery</h3>
+<ul>
+<li><strong>Trigger</strong>: Either direct from PROCESSING (no scheduling) or from SCHEDULED (when time arrives)</li>
+<li><strong>Description</strong>: All messages ready for immediate delivery processing</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>Messages marked as READY<em>TO</em>SEND</li>
+<li>DynamoDB stream triggers activated</li>
+<li>Send pipeline Step Functions initiated</li>
+</ul>
+<li><strong>Next State</strong>: SENT</li>
+</ul>
+<br/>
+<h3>5. SENT - All Messages Sent</h3>
+<ul>
+<li><strong>Trigger</strong>: All messages successfully submitted to Amazon SES</li>
+<li><strong>Description</strong>: Email delivery initiated for all messages in transaction</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>All messages sent to SES</li>
+<li>SES message IDs recorded</li>
+<li>Delivery tracking initiated</li>
+<li>Initial callback notifications sent</li>
+</ul>
+<li><strong>Next State</strong>: COMPLETED</li>
+</ul>
+<br/>
+<h3>6. COMPLETED - All Messages Delivered</h3>
+<ul>
+<li><strong>Trigger</strong>: All messages have final delivery status (delivered, bounced, or complained)</li>
+<li><strong>Description</strong>: Transaction fully processed with final outcomes</li>
+<li><strong>Activities</strong>:</li>
+<ul>
+<li>Final delivery statistics calculated</li>
+<li>Analytics data aggregated</li>
+<li>Final callback notifications sent</li>
+<li>Transaction marked as complete</li>
+</ul>
+</ul>
+<br/>
+<h2>Status Transition Triggers</h2>
+<br/>
+<h3>File Processing Triggers</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Transaction status update during processing
+const updateTransactionStatus = async (transactionId, status, metadata) => {
+  await dynamodb.updateItem({
+    TableName: 'Transactions',
+    Key: { PK: `TRANSACTION#${transactionId}`, SK: 'METADATA' },
+    UpdateExpression: 'SET #status = :status, updated_at = :timestamp',
+    ExpressionAttributeNames: { '#status': 'status' },
+    ExpressionAttributeValues: {
+      ':status': status,
+      ':timestamp': new Date().toISOString()
+    }
+  }).promise();
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Scheduling Logic</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Conditional scheduling based on campaign configuration
+const processScheduling = async (transaction) => {
+  if (transaction.schedule && transaction.schedule.send_at) {
+    // Create EventBridge scheduled events
+    await createScheduledEvents(transaction);
+    await updateTransactionStatus(transaction.id, 'SCHEDULED');
+  } else {
+    // Direct to ready state
+    await updateTransactionStatus(transaction.id, 'READY_TO_SEND');
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Completion Detection</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Monitor message completion to update transaction status
+const checkTransactionCompletion = async (transactionId) => {
+  const stats = await getMessageStatistics(transactionId);
+  
+  if (stats.total === stats.completed) {
+    await updateTransactionStatus(transactionId, 'COMPLETED', {
+      final_stats: stats,
+      completed_at: new Date().toISOString()
+    });
+    
+    // Trigger final callback
+    await triggerCallback(transactionId, 'COMPLETED', stats);
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Data Model Integration</h2>
+<br/>
+<h3>Transaction Record Structure</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "PK": "TRANSACTION#uuid",
+  "SK": "METADATA",
+  "transaction_id": "uuid",
+  "status": "PROCESSING",
+  "template_id": "uuid",
+  "callback_url": "https://...",
+  "total_messages": 1000,
+  "processed_messages": 250,
+  "schedule": {
+    "send_at": "2024-01-01T10:00:00Z"
+  },
+  "created_at": "2024-01-01T09:00:00Z",
+  "updated_at": "2024-01-01T09:15:00Z"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Status Tracking Metadata</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "status_history": [
+    {
+      "status": "ACCEPT",
+      "timestamp": "2024-01-01T09:00:00Z",
+      "metadata": { "source": "api_request" }
+    },
+    {
+      "status": "PROCESSING",
+      "timestamp": "2024-01-01T09:01:00Z",
+      "metadata": { "batch_count": 10 }
+    }
+  ],
+  "current_status": "PROCESSING",
+  "progress": {
+    "total_messages": 1000,
+    "processed_messages": 250,
+    "percentage": 25
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Monitoring &amp; Analytics</h2>
+<br/>
+<h3>Status Transition Metrics</h3>
+<ul>
+<li><strong>Processing Time</strong>: Time spent in each status</li>
+<li><strong>Success Rate</strong>: Percentage of transactions reaching COMPLETED</li>
+<li><strong>Failure Points</strong>: Common failure states and reasons</li>
+<li><strong>Throughput</strong>: Transactions processed per hour</li>
+</ul>
+<br/>
+<h3>Real-time Dashboards</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// CloudWatch metrics for status transitions
+const publishStatusMetric = async (status, transactionId) => {
+  await cloudwatch.putMetricData({
+    Namespace: 'EmailPlatform/Transactions',
+    MetricData: [{
+      MetricName: 'StatusTransition',
+      Dimensions: [
+        { Name: 'Status', Value: status },
+        { Name: 'TransactionId', Value: transactionId }
+      ],
+      Value: 1,
+      Unit: 'Count',
+      Timestamp: new Date()
+    }]
+  }).promise();
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Alerting Rules</h3>
+<ul>
+<li><strong>Stuck Transactions</strong>: Transactions in PROCESSING &gt; 30 minutes</li>
+<li><strong>High Failure Rate</strong>: &gt;5% transactions failing to reach COMPLETED</li>
+<li><strong>Slow Processing</strong>: Average processing time &gt; SLA thresholds</li>
+<li><strong>Scheduling Delays</strong>: Scheduled messages not triggering on time</li>
+</ul>
+<br/>
+<h2>Error Handling</h2>
+<br/>
+<h3>Processing Failures</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "error": {
+    "code": "CSV_PARSING_ERROR",
+    "message": "Invalid email format in row 150",
+    "details": {
+      "row": 150,
+      "email": "invalid-email",
+      "expected_format": "user@domain.com"
+    },
+    "recovery_action": "MANUAL_REVIEW"
+  }
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Retry Mechanisms</h3>
+<ul>
+<li><strong>Transient Failures</strong>: Automatic retry with exponential backoff</li>
+<li><strong>Permanent Failures</strong>: Manual intervention required</li>
+<li><strong>Partial Failures</strong>: Continue processing valid messages</li>
+<li><strong>Rollback Procedures</strong>: Revert to previous stable state</li>
+</ul>
+<br/>
+<h3>Dead Letter Queues</h3>
+<ul>
+<li><strong>Failed Transactions</strong>: Transactions that cannot be processed</li>
+<li><strong>Manual Review</strong>: Administrative interface for failed transactions</li>
+<li><strong>Recovery Procedures</strong>: Steps to recover failed transactions</li>
+<li><strong>Audit Trail</strong>: Complete history of failure and recovery attempts</li>
+</ul>
+<br/>
+<h2>Performance Optimization</h2>
+<br/>
+<h3>Parallel Processing</h3>
+<ul>
+<li><strong>Batch Processing</strong>: Split large files into manageable batches</li>
+<li><strong>Concurrent Execution</strong>: Process multiple batches simultaneously</li>
+<li><strong>Resource Scaling</strong>: Auto-scale based on processing load</li>
+<li><strong>Queue Management</strong>: Optimize message queue throughput</li>
+</ul>
+<br/>
+<h3>Status Update Efficiency</h3>
+<ul>
+<li><strong>Batch Updates</strong>: Group status updates for efficiency</li>
+<li><strong>Conditional Updates</strong>: Only update when status actually changes</li>
+<li><strong>Caching</strong>: Cache frequently accessed status information</li>
+<li><strong>Indexing</strong>: Optimize database queries for status lookups</li>
+</ul>
+<br/>
+<h2>Integration Patterns</h2>
+<br/>
+<h3>Callback Notifications</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Status change callback
+const notifyStatusChange = async (transactionId, oldStatus, newStatus) => {
+  const callback = {
+    transaction_id: transactionId,
+    event_type: 'status_change',
+    old_status: oldStatus,
+    new_status: newStatus,
+    timestamp: new Date().toISOString()
+  };
+  
+  await callbackService.notify(callback);
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Event-Driven Updates</h3>
+<ul>
+<li><strong>DynamoDB Streams</strong>: Trigger downstream processing on status changes</li>
+<li><strong>EventBridge</strong>: Publish status change events for external systems</li>
+<li><strong>SNS Notifications</strong>: Fan-out status updates to multiple subscribers</li>
+<li><strong>SQS Processing</strong>: Queue status-dependent operations</li>
+</ul>
+<br/>
+<h3>API Integration</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+GET /api/v1/transactions/{transaction_id}/status
+Response:
+{
+  "transaction_id": "uuid",
+  "status": "PROCESSING",
+  "progress": {
+    "total_messages": 1000,
+    "processed_messages": 250,
+    "percentage": 25
+  },
+  "estimated_completion": "2024-01-01T09:30:00Z"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+</body>
+</html>

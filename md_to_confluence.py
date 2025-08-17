@@ -223,37 +223,48 @@ def main():
     output_dir = '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/confluence-html'
     os.makedirs(output_dir, exist_ok=True)
     
-    # Find all markdown files
+    # Find all markdown files that actually exist
     md_files = [
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Context.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Email_Platform_Architecture_Documentation.md',
+        # Root level files
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Email_Platform_API_Specification.md',
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Email_Platform_Documentation_Summary.md',
+        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Email_Platform_Standalone_Architecture.md',
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/README.md',
+        
+        # Architecture overview
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/README.md',
+        
+        # Cost View
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Cost-View/README.md',
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Cost-View/Email_Platform_Cost_Analysis.md',
+        
+        # Data View
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Data-View/README.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Data-View/13_email_delivery_analytics_sequence_flow.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Data-View/18_clean_multitenant_architecture_flow.md',
+        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Data-View/06_transaction_status_flow_description.md',
+        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Data-View/07_message_status_flow_description.md',
+        
+        # Deployment View
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Deployment-View/README.md',
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Deployment-View/01_high_level_architecture_flow.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Deployment-View/15_error_handling_sequence_flow.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Deployment-View/16_clean_high_level_architecture_flow.md',
+        
+        # Development View
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/README.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/10_campaign_creation_sequence_flow.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/11_email_sending_sequence_flow.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/12_api_integration_sequence_flow.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/Email_Platform_API_Specification.md',
+        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/02_integration_flow_description.md',
+        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/03_detailed_component_architecture_flow.md',
+        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Development-View/04_callback_flow_description.md',
+        
+        # Security View
         '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Security-View/README.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Security-View/14_authentication_sequence_flow.md',
-        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Security-View/19_clean_security_architecture_flow.md',
+        '/Users/ammarkhalid/Documents/workspace/email-platform-diagrams/Architecture/Security-View/05_security_architecture_flow.md',
     ]
     
-    print(f"Converting {len(md_files)} Markdown files to Confluence HTML...")
+    # Filter to only include files that actually exist
+    existing_files = [f for f in md_files if os.path.exists(f)]
+    
+    print(f"Converting {len(existing_files)} Markdown files to Confluence HTML...")
     print(f"Output directory: {output_dir}\n")
     
-    for md_file in md_files:
+    for md_file in existing_files:
         try:
             output_path = convert_file(md_file, output_dir)
             print(f"✓ Converted: {os.path.basename(md_file)} -> {os.path.relpath(output_path, output_dir)}")
