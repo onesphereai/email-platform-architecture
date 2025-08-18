@@ -1,0 +1,19 @@
+{
+  "name": "dns-lookup-tool",
+  "version": "1.0.0",
+  "description": "Simple DNS lookup tool for email domains - accepts email addresses or domains as parameters",
+  "main": "dns-lookup.js",
+  "scripts": {
+    "start": "node dns-lookup.js",
+    "lookup": "node dns-lookup.js",
+    "example:email": "node dns-lookup.js ammar.khalid@onespherelabs.com.au",
+    "example:domain": "node dns-lookup.js google.com",
+    "help": "node dns-lookup.js"
+  },
+  "keywords": ["dns", "email", "lookup", "spf", "dmarc", "dkim", "cli"],
+  "author": "Ammar Khalid",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

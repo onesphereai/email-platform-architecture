@@ -3,22 +3,459 @@
 ## Overview
 This document explains how to validate that client email addresses (e.g., "marketing@client.com.au") have proper SPF, DKIM, and DMARC authentication setup before allowing them to send emails through our SES platform. This protects our platform's reputation and ensures high deliverability.
 
-## The Challenge
+# Client Email Authentication Validation System
 
-### Scenario
-- Client wants to use "marketing@client.com.au" as the From address
-- Client will send emails to many recipients through our SES platform
-- We need to validate that client.com.au has proper email authentication
-- We don't control the client's DNS - they do
-- We need to ensure their authentication won't cause deliverability issues
+## Overview
+This document explains how to validate that client email addresses (e.g., "marketing@client.com.au") have proper SPF, DKIM, and DMARC authentication setup before allowing them to send emails through our SES platform. This protects our platform's reputation and ensures high deliverability.
 
-### Why Validation is Critical
-1. **Platform Reputation**: Poorly authenticated domains can hurt our SES reputation
-2. **Deliverability**: Recipients may reject emails from unauthenticated domains
-3. **Compliance**: Many email providers require proper authentication
-4. **Client Success**: Ensures client's emails reach inboxes
+## DNS Lookup Tool
 
-## Authentication Validation System
+### Purpose
+The DNS lookup tool provides comprehensive DNS analysis for email domains, checking all critical authentication records needed for email deliverability. This tool validates client domains before onboarding them to the Email Platform.
+
+### Tool Code (dns-lookup.js)
+
+```javascript
+const dns = require('dns').promises;
+
+/**
+ * Perform comprehensive DNS lookup for an email address or domain
+ * @param {string} input - Email address or domain to lookup
+ */
+async function performDNSLookup(input) {
+    // Determine if input is email or domain
+    let domain, email;
+    if (input.includes('@')) {
+        email = input;
+        domain = input.split('@')[1];
+    } else {
+        domain = input;
+        email = `example@${domain}`;
+    }
+    
+    console.log(`\n🔍 DNS Lookup for: ${input}`);
+    console.log(`📧 Domain: ${domain}`);
+    console.log('=' .repeat(50));
+    
+    try {
+        // MX Records - Mail Exchange
+        console.log('\n📬 MX Records (Mail Exchange):');
+        try {
+            const mxRecords = await dns.resolveMx(domain);
+            mxRecords.forEach((record, index) => {
+                console.log(`  ${index + 1}. Priority: ${record.priority}, Exchange: ${record.exchange}`);
+            });
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+        }
+
+        // A Records - IPv4 addresses
+        console.log('\n🌐 A Records (IPv4):');
+        try {
+            const aRecords = await dns.resolve4(domain);
+            aRecords.forEach((record, index) => {
+                console.log(`  ${index + 1}. ${record}`);
+            });
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+        }
+
+        // AAAA Records - IPv6 addresses
+        console.log('\n🌐 AAAA Records (IPv6):');
+        try {
+            const aaaaRecords = await dns.resolve6(domain);
+            aaaaRecords.forEach((record, index) => {
+                console.log(`  ${index + 1}. ${record}`);
+            });
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+        }
+
+        // SPF Records - Sender Policy Framework
+        console.log('\n🛡️  SPF Records (Sender Policy Framework):');
+        try {
+            const txtRecords = await dns.resolveTxt(domain);
+            const spfRecords = txtRecords.filter(record => 
+                record.some(txt => txt.startsWith('v=spf1'))
+            );
+            
+            if (spfRecords.length > 0) {
+                spfRecords.forEach((record, index) => {
+                    console.log(`  ${index + 1}. ${record.join('')}`);
+                });
+            } else {
+                console.log('  ❌ No SPF records found');
+            }
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+        }
+
+        // DMARC Records
+        console.log('\n🔒 DMARC Records:');
+        try {
+            const dmarcDomain = `_dmarc.${domain}`;
+            const dmarcRecords = await dns.resolveTxt(dmarcDomain);
+            const validDmarc = dmarcRecords.filter(record => 
+                record.some(txt => txt.startsWith('v=DMARC1'))
+            );
+            
+            if (validDmarc.length > 0) {
+                validDmarc.forEach((record, index) => {
+                    console.log(`  ${index + 1}. ${record.join('')}`);
+                });
+            } else {
+                console.log('  ❌ No DMARC records found');
+            }
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+        }
+
+        // DKIM Records (common selectors)
+        console.log('\n🔑 DKIM Records (Common Selectors):');
+        const commonSelectors = ['default', 'selector1', 'selector2', 'google', 'k1', 's1', 's2'];
+        
+        for (const selector of commonSelectors) {
+            try {
+                const dkimDomain = `${selector}._domainkey.${domain}`;
+                const dkimRecords = await dns.resolveTxt(dkimDomain);
+                const validDkim = dkimRecords.filter(record => 
+                    record.some(txt => txt.includes('k=rsa') || txt.includes('v=DKIM1'))
+                );
+                
+                if (validDkim.length > 0) {
+                    console.log(`  ✅ ${selector}: Found DKIM record`);
+                    validDkim.forEach(record => {
+                        const dkimText = record.join('');
+                        console.log(`     ${dkimText.substring(0, 100)}${dkimText.length > 100 ? '...' : ''}`);
+                    });
+                }
+            } catch (error) {
+                // Silently continue - most selectors won't exist
+            }
+        }
+
+        // NS Records - Name Servers
+        console.log('\n🌍 NS Records (Name Servers):');
+        try {
+            const nsRecords = await dns.resolveNs(domain);
+            nsRecords.forEach((record, index) => {
+                console.log(`  ${index + 1}. ${record}`);
+            });
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+        }
+
+        // TXT Records - All text records
+        console.log('\n📝 All TXT Records:');
+        try {
+            const txtRecords = await dns.resolveTxt(domain);
+            txtRecords.forEach((record, index) => {
+                const txtContent = record.join('');
+                console.log(`  ${index + 1}. ${txtContent}`);
+            });
+        } catch (error) {
+            console.log(`  ❌ Error: ${error.message}`);
+        }
+
+        console.log('\n' + '=' .repeat(50));
+        console.log('✅ DNS lookup completed successfully');
+
+    } catch (error) {
+        console.error(`❌ General DNS lookup error: ${error.message}`);
+    }
+}
+
+// Main execution
+async function main() {
+    // Get command line arguments
+    const args = process.argv.slice(2);
+    
+    if (args.length === 0) {
+        console.log('❌ Error: Please provide an email address or domain');
+        console.log('\n📖 Usage:');
+        console.log('  node dns-lookup.js <email@domain.com>');
+        console.log('  node dns-lookup.js <domain.com>');
+        console.log('\n📝 Examples:');
+        console.log('  node dns-lookup.js ammar.khalid@onespherelabs.com.au');
+        console.log('  node dns-lookup.js google.com');
+        console.log('  node dns-lookup.js user@example.org');
+        process.exit(1);
+    }
+    
+    const input = args[0];
+    
+    // Basic validation
+    if (input.includes('@')) {
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(input)) {
+            console.log('❌ Error: Invalid email format');
+            console.log('   Expected format: user@domain.com');
+            process.exit(1);
+        }
+    } else {
+        // Domain validation
+        const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.([a-zA-Z]{2,}\.?)+$/;
+        if (!domainRegex.test(input)) {
+            console.log('❌ Error: Invalid domain format');
+            console.log('   Expected format: domain.com');
+            process.exit(1);
+        }
+    }
+    
+    console.log('🚀 Starting DNS Lookup Tool');
+    console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
+    console.log(`🎯 Target: ${input}`);
+    
+    await performDNSLookup(input);
+    
+    console.log('\n🏁 DNS lookup tool finished');
+}
+
+// Run the script
+if (require.main === module) {
+    main().catch(console.error);
+}
+
+module.exports = { performDNSLookup };
+```
+
+## Usage Instructions
+
+### Installation & Setup
+No installation required - uses Node.js built-in modules only.
+
+```bash
+# Ensure you have Node.js installed (version 14+)
+node --version
+
+# Navigate to the tool directory
+cd /Users/ammarkhalid/Documents/workspace/email-platform-diagrams
+```
+
+### Command Line Usage
+
+#### Basic Syntax
+```bash
+# Email address lookup
+node dns-lookup.js <email@domain.com>
+
+# Domain lookup
+node dns-lookup.js <domain.com>
+```
+
+#### Examples
+```bash
+# Validate a client email address
+node dns-lookup.js marketing@client.com.au
+
+# Validate just the domain
+node dns-lookup.js client.com.au
+
+# Test with other domains
+node dns-lookup.js user@gmail.com
+node dns-lookup.js microsoft.com
+```
+
+## Sample Output Examples
+
+### Example 1: Well-Configured Domain (onespherelabs.com.au)
+
+```
+🚀 Starting DNS Lookup Tool
+⏰ Timestamp: 2025-08-18T02:22:38.801Z
+🎯 Target: onespherelabs.com.au
+
+🔍 DNS Lookup for: onespherelabs.com.au
+📧 Domain: onespherelabs.com.au
+==================================================
+
+📬 MX Records (Mail Exchange):
+  1. Priority: 1, Exchange: aspmx.l.google.com
+  2. Priority: 10, Exchange: alt3.aspmx.l.google.com
+  3. Priority: 10, Exchange: alt4.aspmx.l.google.com
+  4. Priority: 5, Exchange: alt1.aspmx.l.google.com
+  5. Priority: 5, Exchange: alt2.aspmx.l.google.com
+
+🌐 A Records (IPv4):
+  1. 13.224.181.93
+  2. 13.224.181.62
+  3. 13.224.181.15
+  4. 13.224.181.55
+
+🌐 AAAA Records (IPv6):
+  ❌ Error: queryAaaa ENODATA onespherelabs.com.au
+
+🛡️  SPF Records (Sender Policy Framework):
+  1. v=spf1 include:_spf.google.com ~all
+
+🔒 DMARC Records:
+  1. v=DMARC1; p=none; rua=mailto:ammar.khalid@onespherelabs.com.au; ruf=mailto:ammar.khalid@onespherelabs.com.au; fo=1
+
+🔑 DKIM Records (Common Selectors):
+  ✅ google: Found DKIM record
+     v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA9efSzQY7QDNfAPebE/OfBQA5iJObg8IIG6K4vIox...
+
+🌍 NS Records (Name Servers):
+  1. ns-110.awsdns-13.com
+  2. ns-1435.awsdns-51.org
+  3. ns-1923.awsdns-48.co.uk
+  4. ns-931.awsdns-52.net
+
+📝 All TXT Records:
+  1. v=spf1 include:_spf.google.com ~all
+
+==================================================
+✅ DNS lookup completed successfully
+
+🏁 DNS lookup tool finished
+```
+
+**Analysis**: ✅ **EXCELLENT CONFIGURATION**
+- **MX Records**: Google Workspace properly configured
+- **SPF**: Authorizes Google servers with soft fail policy
+- **DMARC**: Configured in monitoring mode with reporting
+- **DKIM**: Google DKIM active and properly configured
+- **Overall**: Ready for email platform integration
+
+### Example 2: Partially Configured Domain (fbdms.net)
+
+```
+🚀 Starting DNS Lookup Tool
+⏰ Timestamp: 2025-08-18T02:24:38.385Z
+🎯 Target: fbdms.net
+
+🔍 DNS Lookup for: fbdms.net
+📧 Domain: fbdms.net
+==================================================
+
+📬 MX Records (Mail Exchange):
+  1. Priority: 10, Exchange: mail1.fxdms.net
+  2. Priority: 10, Exchange: mail.fxdms.net
+
+🌐 A Records (IPv4):
+  ❌ Error: queryA ENODATA fbdms.net
+
+🌐 AAAA Records (IPv6):
+  ❌ Error: queryAaaa ENODATA fbdms.net
+
+🛡️  SPF Records (Sender Policy Framework):
+  1. v=spf1 include:production.fxdms.net -all
+
+🔒 DMARC Records:
+  1. v=DMARC1; p=none; rua=mailto:3cu6258m@ag.au.dmarcian.com,mailto:dmarc_agg@production.fxdms.net;ruf=mailto:3cu6258m@fr.au.dmarcian.com
+
+🔑 DKIM Records (Common Selectors):
+
+🌍 NS Records (Name Servers):
+  1. ns1.fxdms.net
+  2. ns2.fxdms.net
+
+📝 All TXT Records:
+  1. cisco-ci-domain-verification=236b0405cb7189164d04ec7cb874825411efc232d73632c38999bdd887f65cae
+  2. MS=ms37055304
+  3. v=spf1 include:production.fxdms.net -all
+
+==================================================
+✅ DNS lookup completed successfully
+
+🏁 DNS lookup tool finished
+```
+
+**Analysis**: ⚠️ **PARTIALLY CONFIGURED**
+- **MX Records**: Custom mail servers configured
+- **SPF**: Strict policy with hard fail (-all)
+- **DMARC**: Professional setup with Dmarcian reporting
+- **DKIM**: ❌ No DKIM records found with common selectors
+- **Overall**: Missing DKIM authentication - requires investigation
+
+## Authentication Validation Workflow
+
+### 1. Pre-Onboarding Validation
+```bash
+# Step 1: Validate client domain
+node dns-lookup.js marketing@newclient.com.au
+
+# Step 2: Analyze results
+# - Check for SPF, DKIM, DMARC presence
+# - Assess authentication completeness
+# - Identify missing configurations
+
+# Step 3: Generate client recommendations
+# - Provide specific DNS record requirements
+# - Explain authentication importance
+# - Set up monitoring for improvements
+```
+
+### 2. Authentication Scoring System
+
+#### Scoring Criteria
+- **SPF Present**: 30 points
+- **DKIM Present**: 40 points  
+- **DMARC Present**: 30 points
+- **Total**: 100 points
+
+#### Approval Thresholds
+- **80-100 points**: ✅ **Approved** - Excellent authentication
+- **60-79 points**: ⚠️ **Conditional** - Partial authentication, monitoring required
+- **0-59 points**: ❌ **Rejected** - Insufficient authentication
+
+### 3. Client Communication Templates
+
+#### Excellent Configuration (onespherelabs.com.au example)
+```
+✅ DOMAIN APPROVED: onespherelabs.com.au
+
+Your domain has excellent email authentication:
+• SPF: ✅ Configured (Google Workspace authorized)
+• DKIM: ✅ Active (Google DKIM signing)
+• DMARC: ✅ Configured (Monitoring mode with reporting)
+
+Status: Ready for Email Platform integration
+Risk Level: Low
+Deliverability: Excellent
+```
+
+#### Partial Configuration (fbdms.net example)
+```
+⚠️ DOMAIN CONDITIONAL: fbdms.net
+
+Your domain has partial email authentication:
+• SPF: ✅ Configured (Strict policy)
+• DKIM: ❌ Missing (No common selectors found)
+• DMARC: ✅ Configured (Professional reporting setup)
+
+Required Actions:
+1. Set up DKIM signing with your email provider
+2. Verify DKIM selector configuration
+3. Test DKIM authentication after setup
+
+Status: Conditional approval with monitoring
+Risk Level: Medium
+Deliverability: May be affected without DKIM
+```
+
+## Integration with Email Platform
+
+### 1. API Integration Points
+- **Pre-send validation**: Check authentication before campaign launch
+- **Real-time monitoring**: Periodic DNS checks for configuration changes
+- **Client dashboard**: Display authentication status and recommendations
+- **Alert system**: Notify clients of authentication issues
+
+### 2. Automated Workflows
+- **Daily monitoring**: Automated DNS checks for approved domains
+- **Change detection**: Alert when authentication records change
+- **Compliance reporting**: Generate authentication compliance reports
+- **Client notifications**: Automated emails for authentication issues
+
+### 3. Security Benefits
+- **Platform protection**: Prevents reputation damage from unauthenticated domains
+- **Client success**: Ensures high deliverability for client campaigns
+- **Compliance**: Meets email provider authentication requirements
+- **Risk mitigation**: Identifies potential deliverability issues early
+
+This DNS lookup tool provides the foundation for robust client email authentication validation, ensuring only properly configured domains can send through the Email Platform while maintaining high deliverability standards and protecting platform reputation.
 
 ### 1. DNS-Based Authentication Checks
 
