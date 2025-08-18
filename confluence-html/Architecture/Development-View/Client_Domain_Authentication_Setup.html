@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Client_Domain_Authentication_Setup</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- Confluence Storage Format -->
+<h1>Client Domain Authentication Setup with Amazon SES</h1>
+<br/>
+<h2>Overview</h2>
+<p>This document explains how to handle SPF, DKIM, and DMARC authentication when clients bring their own domains to use with our Email Platform. This setup ensures proper email deliverability and authentication while maintaining client domain ownership.</p>
+<br/>
+<h2>Architecture Pattern: Client-Owned Domain with SES</h2>
+<br/>
+<h3>High-Level Flow</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">none</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Client Domain (client.com) 
+    ↓ DNS Configuration
+Amazon SES (Email Platform)
+    ↓ Authenticated Emails
+Recipients (Inbox Delivery)
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Key Components</h3>
+<ol>
+<li><strong>Domain Verification</strong>: Client proves domain ownership</li>
+<li><strong>DKIM Setup</strong>: SES generates DKIM keys for client domain</li>
+<li><strong>Custom MAIL FROM</strong>: Optional subdomain for bounce handling</li>
+<li><strong>SPF Configuration</strong>: Authorize SES to send from client domain</li>
+<li><strong>DMARC Policy</strong>: Define authentication requirements</li>
+</ol>
+<br/>
+<h2>Step-by-Step Setup Process</h2>
+<br/>
+<h3>Phase 1: Domain Verification in SES</h3>
+<br/>
+<h4>1.1 Client Onboarding API Flow</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Email Platform API - Domain Registration
+POST /api/v1/domains
+{
+  "client_id": "client-123",
+  "domain": "client.com",
+  "contact_email": "admin@client.com",
+  "mail_from_subdomain": "mail.client.com" // Optional
+}
+
+// Response
+{
+  "domain_id": "domain-456",
+  "verification_token": "abc123def456",
+  "dns_records": [
+    {
+      "type": "TXT",
+      "name": "_amazonses.client.com",
+      "value": "abc123def456",
+      "purpose": "Domain Verification"
+    }
+  ],
+  "status": "pending_verification"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>1.2 SES Domain Identity Creation</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Backend Lambda Function
+const createDomainIdentity = async (domain, clientId) => {
+  // Create domain identity in SES
+  const sesResponse = await ses.putIdentityVerificationAttributes({
+    Identity: domain
+  }).promise();
+  
+  // Store domain mapping in DynamoDB
+  await dynamodb.putItem({
+    TableName: 'ClientDomains',
+    Item: {
+      PK: `CLIENT#${clientId}`,
+      SK: `DOMAIN#${domain}`,
+      domain: domain,
+      ses_identity: domain,
+      status: 'pending_verification',
+      created_at: new Date().toISOString()
+    }
+  }).promise();
+  
+  return sesResponse;
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Phase 2: DKIM Configuration</h3>
+<br/>
+<h4>2.1 Enable DKIM for Client Domain</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Enable DKIM signing for the domain
+const enableDKIM = async (domain) => {
+  // Enable DKIM
+  await ses.putIdentityDkimAttributes({
+    Identity: domain,
+    DkimEnabled: true
+  }).promise();
+  
+  // Get DKIM tokens for DNS setup
+  const dkimTokens = await ses.getIdentityDkimAttributes({
+    Identities: [domain]
+  }).promise();
+  
+  return dkimTokens.DkimAttributes[domain].DkimTokens;
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>2.2 DKIM DNS Records for Client</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Generate DKIM DNS records for client
+const generateDKIMRecords = (domain, dkimTokens) => {
+  return dkimTokens.map(token => ({
+    type: 'CNAME',
+    name: `${token}._domainkey.${domain}`,
+    value: `${token}.dkim.amazonses.com`,
+    purpose: 'DKIM Authentication'
+  }));
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Phase 3: Custom MAIL FROM Domain (Optional but Recommended)</h3>
+<br/>
+<h4>3.1 Configure Custom MAIL FROM</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Set up custom MAIL FROM domain
+const setupCustomMailFrom = async (domain, mailFromDomain) => {
+  await ses.setIdentityMailFromDomain({
+    Identity: domain,
+    MailFromDomain: mailFromDomain,
+    BehaviorOnMXFailure: 'UseDefaultValue' // Fallback to SES default
+  }).promise();
+  
+  // Return required DNS records
+  return [
+    {
+      type: 'MX',
+      name: mailFromDomain,
+      value: `10 feedback-smtp.${AWS_REGION}.amazonses.com`,
+      purpose: 'Bounce/Complaint Handling'
+    },
+    {
+      type: 'TXT',
+      name: mailFromDomain,
+      value: `v=spf1 include:amazonses.com ~all`,
+      purpose: 'SPF Authorization'
+    }
+  ];
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Phase 4: Complete DNS Configuration</h3>
+<br/>
+<h4>4.1 Required DNS Records Summary</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+# Domain Verification
+_amazonses.client.com TXT "verification-token"
+
+# DKIM Authentication (3 records)
+token1._domainkey.client.com CNAME token1.dkim.amazonses.com
+token2._domainkey.client.com CNAME token2.dkim.amazonses.com  
+token3._domainkey.client.com CNAME token3.dkim.amazonses.com
+
+# Custom MAIL FROM (if used)
+mail.client.com MX 10 feedback-smtp.ap-southeast-2.amazonses.com
+mail.client.com TXT "v=spf1 include:amazonses.com ~all"
+
+# SPF for main domain (if not using custom MAIL FROM)
+client.com TXT "v=spf1 include:amazonses.com ~all"
+
+# DMARC Policy
+_dmarc.client.com TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@client.com"
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h4>4.2 Client DNS Setup Instructions</h4>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// API Response with DNS Instructions
+const getDNSInstructions = (domain, dkimTokens, mailFromDomain) => {
+  return {
+    domain: domain,
+    instructions: "Add the following DNS records to your domain:",
+    records: [
+      // Domain verification
+      {
+        type: "TXT",
+        name: `_amazonses.${domain}`,
+        value: verificationToken,
+        ttl: 1800,
+        priority: "HIGH",
+        description: "Required for domain verification"
+      },
+      
+      // DKIM records
+      ...dkimTokens.map(token => ({
+        type: "CNAME",
+        name: `${token}._domainkey.${domain}`,
+        value: `${token}.dkim.amazonses.com`,
+        ttl: 1800,
+        priority: "HIGH",
+        description: "Required for DKIM authentication"
+      })),
+      
+      // Custom MAIL FROM (if configured)
+      ...(mailFromDomain ? [
+        {
+          type: "MX",
+          name: mailFromDomain,
+          value: `10 feedback-smtp.${region}.amazonses.com`,
+          ttl: 1800,
+          priority: "MEDIUM",
+          description: "For bounce and complaint handling"
+        },
+        {
+          type: "TXT", 
+          name: mailFromDomain,
+          value: "v=spf1 include:amazonses.com ~all",
+          ttl: 1800,
+          priority: "HIGH",
+          description: "SPF authorization for MAIL FROM domain"
+        }
+      ] : []),
+      
+      // Main domain SPF (if not using custom MAIL FROM)
+      ...(!mailFromDomain ? [{
+        type: "TXT",
+        name: domain,
+        value: "v=spf1 include:amazonses.com ~all",
+        ttl: 1800,
+        priority: "HIGH",
+        description: "SPF authorization for main domain"
+      }] : []),
+      
+      // DMARC policy (recommended)
+      {
+        type: "TXT",
+        name: `_dmarc.${domain}`,
+        value: "v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@client.com",
+        ttl: 1800,
+        priority: "MEDIUM",
+        description: "DMARC policy for email authentication"
+      }
+    ]
+  };
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Email Sending with Client Domain</h2>
+<br/>
+<h3>Sending Configuration</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Send email using client's verified domain
+const sendEmailWithClientDomain = async (clientId, emailData) => {
+  // Get client domain configuration
+  const clientDomain = await getClientDomain(clientId);
+  
+  if (clientDomain.status !== 'verified') {
+    throw new Error('Client domain not verified');
+  }
+  
+  // Configure email parameters
+  const emailParams = {
+    Source: `${emailData.fromName} <${emailData.fromEmail}>`, // e.g., "Company <noreply@client.com>"
+    Destination: {
+      ToAddresses: emailData.recipients
+    },
+    Message: {
+      Subject: {
+        Data: emailData.subject,
+        Charset: 'UTF-8'
+      },
+      Body: {
+        Html: {
+          Data: emailData.htmlBody,
+          Charset: 'UTF-8'
+        },
+        Text: {
+          Data: emailData.textBody,
+          Charset: 'UTF-8'
+        }
+      }
+    },
+    // Use client's configuration set if available
+    ConfigurationSetName: clientDomain.configuration_set,
+    
+    // Tags for tracking
+    Tags: [
+      {
+        Name: 'ClientId',
+        Value: clientId
+      },
+      {
+        Name: 'Domain',
+        Value: clientDomain.domain
+      }
+    ]
+  };
+  
+  return await ses.sendEmail(emailParams).promise();
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Authentication Flow Validation</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Validate authentication setup
+const validateDomainAuthentication = async (domain) => {
+  const results = {
+    domain_verified: false,
+    dkim_enabled: false,
+    dkim_verified: false,
+    spf_configured: false,
+    dmarc_configured: false,
+    mail_from_configured: false
+  };
+  
+  try {
+    // Check domain verification
+    const verificationAttrs = await ses.getIdentityVerificationAttributes({
+      Identities: [domain]
+    }).promise();
+    
+    results.domain_verified = verificationAttrs.VerificationAttributes[domain]?.VerificationStatus === 'Success';
+    
+    // Check DKIM
+    const dkimAttrs = await ses.getIdentityDkimAttributes({
+      Identities: [domain]
+    }).promise();
+    
+    const dkimData = dkimAttrs.DkimAttributes[domain];
+    results.dkim_enabled = dkimData?.DkimEnabled || false;
+    results.dkim_verified = dkimData?.DkimVerificationStatus === 'Success';
+    
+    // Check MAIL FROM domain
+    const mailFromAttrs = await ses.getIdentityMailFromDomainAttributes({
+      Identities: [domain]
+    }).promise();
+    
+    const mailFromData = mailFromAttrs.MailFromDomainAttributes[domain];
+    results.mail_from_configured = mailFromData?.MailFromDomain ? true : false;
+    
+    // DNS checks would require additional validation
+    // This could be done via DNS lookup APIs
+    
+  } catch (error) {
+    console.error('Error validating domain authentication:', error);
+  }
+  
+  return results;
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>DMARC Compliance Strategies</h2>
+<br/>
+<h3>Option 1: DKIM Alignment (Recommended)</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+# Client DNS Configuration
+# DKIM records point to SES
+token1._domainkey.client.com CNAME token1.dkim.amazonses.com
+token2._domainkey.client.com CNAME token2.dkim.amazonses.com
+token3._domainkey.client.com CNAME token3.dkim.amazonses.com
+
+# DMARC policy allows DKIM alignment
+_dmarc.client.com TXT "v=DMARC1; p=quarantine; adkim=r; aspf=r"
+
+# Email headers
+From: noreply@client.com
+DKIM-Signature: d=client.com; s=token1; ...
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>Option 2: SPF Alignment with Custom MAIL FROM</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+# Custom MAIL FROM subdomain
+mail.client.com MX 10 feedback-smtp.ap-southeast-2.amazonses.com
+mail.client.com TXT "v=spf1 include:amazonses.com ~all"
+
+# DMARC policy
+_dmarc.client.com TXT "v=DMARC1; p=quarantine; adkim=r; aspf=s"
+
+# Email headers (SPF alignment requires From domain = MAIL FROM domain)
+From: noreply@client.com
+Return-Path: bounce@mail.client.com  # This won't achieve SPF alignment
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<p><strong>Note</strong>: SPF alignment is difficult with third-party senders like SES because the MAIL FROM domain is typically different from the From domain. DKIM alignment is the preferred approach.</p>
+<br/>
+<h2>Client Onboarding Workflow</h2>
+<br/>
+<h3>1. Domain Registration API</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+POST /api/v1/clients/{clientId}/domains
+{
+  "domain": "client.com",
+  "contact_email": "admin@client.com",
+  "use_custom_mail_from": true,
+  "mail_from_subdomain": "mail"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. DNS Instructions Response</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+{
+  "domain_id": "domain-123",
+  "status": "pending_verification",
+  "dns_records": [
+    // All required DNS records with instructions
+  ],
+  "verification_url": "https://platform.com/domains/domain-123/verify",
+  "estimated_propagation_time": "24-48 hours"
+}
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>3. Verification Monitoring</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Automated verification checking
+const monitorDomainVerification = async (domainId) => {
+  const domain = await getDomainById(domainId);
+  
+  // Check SES verification status
+  const verification = await validateDomainAuthentication(domain.domain);
+  
+  if (verification.domain_verified && verification.dkim_verified) {
+    // Update domain status
+    await updateDomainStatus(domainId, 'verified');
+    
+    // Notify client
+    await sendVerificationSuccessEmail(domain.client_id, domain.domain);
+    
+    // Enable email sending for this domain
+    await enableDomainForSending(domainId);
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Security Considerations</h2>
+<br/>
+<h3>1. Domain Ownership Validation</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Additional domain ownership checks
+const validateDomainOwnership = async (domain, clientId) => {
+  // Check if domain is already claimed by another client
+  const existingDomain = await checkDomainExists(domain);
+  if (existingDomain && existingDomain.client_id !== clientId) {
+    throw new Error('Domain already claimed by another client');
+  }
+  
+  // Validate domain format and restrictions
+  if (isRestrictedDomain(domain)) {
+    throw new Error('Domain not allowed for client use');
+  }
+  
+  return true;
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. Rate Limiting and Quotas</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Domain verification rate limits
+const domainRateLimits = {
+  max_domains_per_client: 10,
+  max_verification_attempts: 5,
+  verification_cooldown: 3600 // 1 hour
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>3. Monitoring and Alerts</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">javascript</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+// Monitor domain health
+const monitorDomainHealth = async (domain) => {
+  const health = await validateDomainAuthentication(domain);
+  
+  if (!health.dkim_verified || !health.domain_verified) {
+    // Alert client about authentication issues
+    await sendDomainHealthAlert(domain, health);
+  }
+};
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Troubleshooting Common Issues</h2>
+<br/>
+<h3>1. DKIM Verification Failures</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Issue: DKIM tokens not verifying
+Solutions:
+  - Check CNAME records are correctly configured
+  - Verify DNS propagation (can take 24-48 hours)
+  - Ensure no conflicting DNS records
+  - Check for typos in DNS record values
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>2. SPF Authentication Failures</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Issue: SPF checks failing
+Solutions:
+  - Verify SPF record includes "include:amazonses.com"
+  - Check for multiple SPF records (only one allowed)
+  - Ensure proper SPF syntax
+  - Consider SPF record length limits
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h3>3. DMARC Alignment Issues</h3>
+<ac:structured-macro ac:name="code" ac:schema-version="1">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+Issue: DMARC failing despite SPF/DKIM passing
+Solutions:
+  - Ensure DKIM signature domain matches From domain
+  - Use relaxed alignment (adkim=r, aspf=r)
+  - Verify From header domain matches authenticated domain
+  - Check DMARC policy syntax
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<br/>
+<h2>Best Practices</h2>
+<br/>
+<h3>1. Client Communication</h3>
+<ul>
+<li>Provide clear DNS setup instructions</li>
+<li>Offer DNS validation tools</li>
+<li>Set proper expectations for propagation time</li>
+<li>Provide ongoing monitoring and alerts</li>
+</ul>
+<br/>
+<h3>2. Technical Implementation</h3>
+<ul>
+<li>Use DKIM alignment over SPF alignment</li>
+<li>Implement automated verification monitoring</li>
+<li>Provide detailed error messages and troubleshooting</li>
+<li>Support both custom MAIL FROM and default configurations</li>
+</ul>
+<br/>
+<h3>3. Deliverability Optimization</h3>
+<ul>
+<li>Monitor reputation metrics per client domain</li>
+<li>Implement proper bounce and complaint handling</li>
+<li>Provide deliverability reporting and insights</li>
+<li>Support suppression list management per domain</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><strong>Document Version</strong>: 1.0  </p>
+<p><strong>Last Updated</strong>: August 18, 2024  </p>
+<p><strong>Architecture</strong>: Standalone Email Platform with Client Domain Authentication</p>
+<br/>
+</body>
+</html>
